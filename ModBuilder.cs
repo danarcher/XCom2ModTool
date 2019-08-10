@@ -51,6 +51,24 @@ namespace XCom2ModTool
         public void Build(bool full)
         {
             Report.Verbose($"Building {modInfo.ModName}");
+
+            // Load metadata first, to check project structure is as we expect before we start moving files.
+            Report.Verbose("Loading metadata");
+            var projectContents = XDocument.Parse(File.ReadAllText(modInfo.ProjectPath));
+            var projectProperties = projectContents.Root.Local(ProjectXmlProperties);
+            var modSteamPublishId = projectProperties.Local(ProjectXmlPropertySteamPublishId).Value;
+            var modTitle = projectProperties.Local(ProjectXmlPropertyTitle).Value;
+            var modDescription = projectProperties.Local(ProjectXmlPropertyDescription).Value;
+
+            Report.Verbose($"  Title: {modTitle}");
+            Report.Verbose($"  Description: {modDescription}");
+            Report.Verbose($"  Steam Publish ID: {modSteamPublishId}");
+
+            if (!string.Equals(modTitle, modInfo.ModName, StringComparison.Ordinal))
+            {
+                Report.Warning($"Mod name {modInfo.ModName} does not match title '{modTitle}' in project {modInfo.ProjectName}");
+            }
+
             Clean();
             StageFolder(ConfigFolderName);
             StageFolder(ContentFolderName);
@@ -69,22 +87,6 @@ namespace XCom2ModTool
                 modIntermediateCompiledScriptPath = Path.Combine(edition.SdkXComGameScriptPath, modInfo.ModName + ScriptExtension);
                 modStagingCompiledScriptPath = Path.Combine(modStagingScriptFolderPath, modInfo.ModName + ScriptExtension);
                 Directory.CreateDirectory(modStagingScriptFolderPath);
-            }
-
-            Report.Verbose("Loading metadata");
-            var projectContents = XDocument.Parse(File.ReadAllText(modInfo.ProjectPath));
-            var projectProperties = projectContents.Root.Local(ProjectXmlProperties);
-            var modSteamPublishId = projectProperties.Local(ProjectXmlPropertySteamPublishId).Value;
-            var modTitle = projectProperties.Local(ProjectXmlPropertyTitle).Value;
-            var modDescription = projectProperties.Local(ProjectXmlPropertyDescription).Value;
-
-            Report.Verbose($"  Title: {modTitle}");
-            Report.Verbose($"  Description: {modDescription}");
-            Report.Verbose($"  Steam Publish ID: {modSteamPublishId}");
-
-            if (!string.Equals(modTitle, modInfo.ModName, StringComparison.Ordinal))
-            {
-                Report.Warning($"Mod name {modInfo.ModName} does not match title '{modTitle}' in project {modInfo.ProjectName}");
             }
 
             Report.Verbose("Writing metadata");
