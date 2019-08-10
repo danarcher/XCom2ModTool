@@ -36,5 +36,27 @@ namespace XCom2ModTool
                 File.Delete(file.FullName);
             }
         }
+
+        // Adapted from https://stackoverflow.com/a/326153
+        public static string GetExactPathName(string pathName)
+        {
+            if (!File.Exists(pathName) && !Directory.Exists(pathName))
+            {
+                return pathName;
+            }
+
+            var di = new DirectoryInfo(pathName);
+
+            if (di.Parent != null)
+            {
+                return Path.Combine(
+                    GetExactPathName(di.Parent.FullName),
+                    di.Parent.GetFileSystemInfos(di.Name)[0].Name);
+            }
+            else
+            {
+                return di.Name.ToUpper();
+            }
+        }
     }
 }

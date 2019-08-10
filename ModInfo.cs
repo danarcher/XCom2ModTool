@@ -12,9 +12,9 @@ namespace XCom2ModTool
 
         public ModInfo(string path)
         {
-            RootPath = path;
+            RootPath = DirectoryHelper.GetExactPathName(path);
 
-            RootFolder = Path.GetFileName(path);
+            RootFolder = Path.GetFileName(RootPath);
             ModName = RootFolder;
             InnerFolder = ModName;
             SolutionName = ModName;
