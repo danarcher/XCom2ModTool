@@ -1,0 +1,170 @@
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+
+namespace XCom2ModTool
+{
+    internal static class Program
+    {
+        public static string Name { get; } = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
+
+        public static Encoding DefaultEncoding { get; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+
+        public static void Main(string[] args)
+        {
+            while (args.Length > 0)
+            {
+                switch (args[0])
+                {
+                    case "help":
+                    case "--help":
+                    case "-h":
+                    case "-?":
+                    case "/help":
+                    case "/h":
+                    case "/?":
+                        Help();
+                        return;
+                    case "version":
+                    case "--version":
+                    case "/version":
+                        Version();
+                        return;
+                    case "--verbose":
+                    case "-v":
+                    case "/verbose":
+                    case "/v":
+                        Report.IsVerbose = true;
+                        args = args.Skip(1).ToArray();
+                        break;
+                    case "rename":
+                        Try(() => Rename(args.Skip(1).ToArray()));
+                        return;
+                    case "build":
+                        Try(() => Build(args.Skip(1).ToArray()));
+                        return;
+                    default:
+                        Report.Error($"{args[0]} is not a {Name} command. See '{Name} --help'.");
+                        Environment.ExitCode = 1;
+                        return;
+                }
+            }
+
+            Help();
+        }
+
+        private static void Try(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Report.Exception(ex);
+                Environment.Exit(1);
+            }
+        }
+
+        private static void Rename(string[] args)
+        {
+            if (args.Length != 2)
+            {
+                HelpRename();
+                return;
+            }
+
+            ModRenamer.Rename(args[0], args[1]);
+        }
+
+        private static void Build(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                HelpBuild();
+                return;
+            }
+
+            if (args[0] == "clean")
+            {
+                BuildClean(args.Skip(1).ToArray());
+                return;
+            }
+
+            var full = false;
+            if (args[0] == "full")
+            {
+                full = true;
+                args = args.Skip(1).ToArray();
+            }
+
+            if (args.Length != 1)
+            {
+                HelpBuild();
+                return;
+            }
+
+            var builder = new ModBuilder(XCom2.Base, new ModInfo(args[0]));
+            builder.Build(full: full);
+        }
+
+        private static void BuildClean(string[] args)
+        {
+            if (args.Length != 1)
+            {
+                HelpBuild();
+                return;
+            }
+
+            var builder = new ModBuilder(XCom2.Base, new ModInfo(args[0]));
+            builder.Clean();
+        }
+
+        private static void Help()
+        {
+            var indent = new string(' ', Name.Length);
+            Console.WriteLine($"usage: {Name} [--version ] [ -h | --help ] [ -v | --verbose ]");
+            Console.WriteLine($"       {indent} <command> [<args>]");
+            Console.WriteLine();
+            Console.WriteLine("Commands:");
+            Console.WriteLine("  rename       Rename a mod");
+            Console.WriteLine();
+            Paths();
+        }
+
+        private static void HelpRename()
+        {
+            Console.WriteLine("To rename a mod:");
+            Console.WriteLine($"{Name} rename <from folder> <to folder>");
+        }
+
+        private static void HelpBuild()
+        {
+            Console.WriteLine("To build a mod:");
+            Console.WriteLine($"{Name} build <folder>");
+            Console.WriteLine();
+            Console.WriteLine($"To clean a mod's build:");
+            Console.WriteLine($"{Name} build clean <folder>");
+        }
+
+        private static void Version()
+        {
+            var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            var copyright = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
+            Console.WriteLine($"{Name} version {version}");
+            Console.WriteLine(copyright);
+            Console.WriteLine();
+            Paths();
+        }
+
+        private static void Paths()
+        {
+            Console.WriteLine($"{XCom2.Base.DisplayName} is {(XCom2.Base.IsInstalled ? XCom2.Base.Path : "not found")}");
+            Console.WriteLine($"{XCom2.Wotc.DisplayName} is {(XCom2.Wotc.IsInstalled ? XCom2.Wotc.Path : "not found")}");
+            Console.WriteLine($"{XCom2.Base.SdkDisplayName} is {(XCom2.Base.IsSdkInstalled ? XCom2.Base.SdkPath : "not found")}");
+            Console.WriteLine($"{XCom2.Wotc.SdkDisplayName} is {(XCom2.Wotc.IsSdkInstalled ? XCom2.Wotc.SdkPath : "not found")}");
+        }
+    }
+}

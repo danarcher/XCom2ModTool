@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29001.49
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XCom2ModTool", "XCom2ModTool.csproj", "{554943A3-7DD5-414D-AD30-916B138ACC38}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{554943A3-7DD5-414D-AD30-916B138ACC38}.Debug|x86.ActiveCfg = Debug|x86
+		{554943A3-7DD5-414D-AD30-916B138ACC38}.Debug|x86.Build.0 = Debug|x86
+		{554943A3-7DD5-414D-AD30-916B138ACC38}.Release|x86.ActiveCfg = Release|x86
+		{554943A3-7DD5-414D-AD30-916B138ACC38}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AE23435C-5230-4F51-9821-2FDCF61722B6}
+	EndGlobalSection
+EndGlobal
