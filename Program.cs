@@ -129,7 +129,8 @@ namespace XCom2ModTool
             Console.WriteLine($"       {indent} <command> [<args>]");
             Console.WriteLine();
             Console.WriteLine("Commands:");
-            Console.WriteLine("  rename       Rename a mod");
+            Console.WriteLine("  rename         Rename a mod");
+            Console.WriteLine("  build [full]   Build a mod");
             Console.WriteLine();
             Paths();
         }
@@ -143,7 +144,7 @@ namespace XCom2ModTool
         private static void HelpBuild()
         {
             Console.WriteLine("To build a mod:");
-            Console.WriteLine($"{Name} build <folder>");
+            Console.WriteLine($"{Name} build [full] <folder>");
             Console.WriteLine();
             Console.WriteLine($"To clean a mod's build:");
             Console.WriteLine($"{Name} build clean <folder>");
