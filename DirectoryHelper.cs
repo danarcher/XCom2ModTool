@@ -58,5 +58,79 @@ namespace XCom2ModTool
                 return di.Name.ToUpper();
             }
         }
+
+        public static void ReplaceTextFileContents(string path, params (string find, string replace)[] replacements)
+        {
+            var projectText = File.ReadAllText(path);
+            var newProjectText = projectText;
+            foreach (var pair in replacements)
+            {
+                newProjectText = newProjectText.Replace(pair.find, pair.replace);
+            }
+            if (!string.Equals(projectText, newProjectText, StringComparison.Ordinal))
+            {
+                File.WriteAllText(path, newProjectText, Program.DefaultEncoding);
+            }
+        }
+
+        public static bool IsDirectory(string path)
+        {
+            var attributes = File.GetAttributes(path);
+            return attributes.HasFlag(FileAttributes.Directory);
+        }
+
+        public static void MoveFileOrDirectory(string sourcePath, string targetPath)
+        {
+            if (IsDirectory(sourcePath))
+            {
+                Directory.Move(sourcePath, targetPath);
+            }
+            else
+            {
+                File.Move(sourcePath, targetPath);
+            }
+        }
+
+        public static void ReplaceFileOrDirectoryName(string path, params (string find, string replace)[] replacements)
+        {
+            var folderPath = Path.GetDirectoryName(path);
+            var fileName = Path.GetFileName(path);
+
+            foreach (var pair in replacements)
+            {
+                fileName = fileName.Replace(pair.find, pair.replace);
+            }
+
+            var newPath = Path.Combine(folderPath, fileName);
+            if (!string.Equals(path, newPath, StringComparison.Ordinal))
+            {
+                MoveFileOrDirectory(path, newPath);
+            }
+        }
+
+        public static void ReplaceDirectoryContents(string path, string[] extensions, StringComparison comparison, SearchOption searchOption, bool rename, params (string find, string replace)[] replacements)
+        {
+            foreach (var filePath in Directory.GetFiles(path, "*.*", searchOption))
+            {
+                if (extensions == null || extensions.Any(x => string.Equals(Path.GetExtension(filePath), x, comparison)))
+                {
+                    ReplaceTextFileContents(filePath, replacements);
+                }
+
+                if (rename)
+                {
+                    ReplaceFileOrDirectoryName(filePath, replacements);
+                }
+            }
+
+            if (rename)
+            {
+                foreach (var folderPath in Directory.GetDirectories(path, "*", searchOption)
+                                                    .OrderByDescending(x => x.Length))
+                {
+                    ReplaceFileOrDirectoryName(folderPath, replacements);
+                }
+            }
+        }
     }
 }

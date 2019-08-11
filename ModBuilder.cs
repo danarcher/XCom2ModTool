@@ -226,7 +226,7 @@ namespace XCom2ModTool
                     if (match.Success)
                     {
                         var errors = int.Parse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture);
-                        var warnings = int.Parse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture);
+                        var warnings = int.Parse(match.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture);
                         if (errors == 0 && warnings == 0)
                         {
                             return;

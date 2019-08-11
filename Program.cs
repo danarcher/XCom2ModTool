@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -10,9 +11,30 @@ namespace XCom2ModTool
     {
         public static string Name { get; } = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
 
+        public static string HomePath { get; } = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+
         public static Encoding DefaultEncoding { get; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
 
         public static void Main(string[] args)
+        {
+            try
+            {
+                Run(args);
+            }
+            catch (Exception ex)
+            {
+                Report.Exception(ex);
+                Environment.ExitCode = 1;
+            }
+
+            if (Debugger.IsAttached)
+            {
+                Console.WriteLine("[Press any key to exit.]");
+                Console.ReadKey();
+            }
+        }
+
+        private static void Run(string[] args)
         {
             while (args.Length > 0)
             {
@@ -39,11 +61,17 @@ namespace XCom2ModTool
                         Report.IsVerbose = true;
                         args = args.Skip(1).ToArray();
                         break;
+                    case "create":
+                        Create(args.Skip(1).ToArray());
+                        return;
                     case "rename":
-                        Try(() => Rename(args.Skip(1).ToArray()));
+                        Rename(args.Skip(1).ToArray());
                         return;
                     case "build":
-                        Try(() => Build(args.Skip(1).ToArray()));
+                        Build(args.Skip(1).ToArray());
+                        return;
+                    case "open":
+                        Open(args.Skip(1).ToArray());
                         return;
                     default:
                         Report.Error($"{args[0]} is not a {Name} command. See '{Name} --help'.");
@@ -55,17 +83,15 @@ namespace XCom2ModTool
             Help();
         }
 
-        private static void Try(Action action)
+        private static void Create(string[] args)
         {
-            try
+            if (args.Length != 1)
             {
-                action();
+                HelpCreate();
+                return;
             }
-            catch (Exception ex)
-            {
-                Report.Exception(ex);
-                Environment.Exit(1);
-            }
+
+            ModCreator.Create(args[0]);
         }
 
         private static void Rename(string[] args)
@@ -122,6 +148,17 @@ namespace XCom2ModTool
             builder.Clean();
         }
 
+        private static void Open(string[] args)
+        {
+            if (args.Length != 1)
+            {
+                HelpOpen();
+                return;
+            }
+
+            XCom2Browser.Browse(args[0]);
+        }
+
         private static void Help()
         {
             var indent = new string(' ', Name.Length);
@@ -129,10 +166,18 @@ namespace XCom2ModTool
             Console.WriteLine($"       {indent} <command> [<args>]");
             Console.WriteLine();
             Console.WriteLine("Commands:");
+            Console.WriteLine("  create         Create a mod");
             Console.WriteLine("  rename         Rename a mod");
             Console.WriteLine("  build [full]   Build a mod");
+            Console.WriteLine("  open           Open a specific XCOM folder");
             Console.WriteLine();
             Paths();
+        }
+
+        private static void HelpCreate()
+        {
+            Console.WriteLine("To create a mod:");
+            Console.WriteLine($"{Name} create <folder>");
         }
 
         private static void HelpRename()
@@ -148,6 +193,44 @@ namespace XCom2ModTool
             Console.WriteLine();
             Console.WriteLine($"To clean a mod's build:");
             Console.WriteLine($"{Name} build clean <folder>");
+        }
+
+        private static void HelpOpen()
+        {
+            Console.WriteLine("To open a specific XCOM 2 folder:");
+            Console.WriteLine($"{Name} open <folder>");
+            Console.WriteLine();
+            Console.WriteLine("Folders:");
+            var folders = XCom2Browser.GetFolders();
+            var length = folders.Max(x => x.name.Length) + 2;
+            foreach (var folder in folders)
+            {
+                var indent = new string(' ', length - folder.name.Length);
+                Console.WriteLine($"  {folder.name}{indent}{folder.description}");
+                if (Report.IsVerbose)
+                {
+                    indent = new string(' ', length);
+                    string path;
+                    try
+                    {
+                        path = folder.getPath();
+                    }
+                    catch (Exception ex)
+                    {
+                        path = $"{ex.Message}";
+                    }
+                    Console.WriteLine($"  {indent}{path}");
+                    if (folder != folders.Last())
+                    {
+                        Console.WriteLine();
+                    }
+                }
+            }
+            if (!Report.IsVerbose)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Use '{Name} --verbose open' to see folder paths.");
+            }
         }
 
         private static void Version()

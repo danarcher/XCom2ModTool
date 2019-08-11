@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="DirectoryHelper.cs" />
     <Compile Include="ModBuilder.cs" />
+    <Compile Include="ModCreator.cs" />
     <Compile Include="ModInfo.cs" />
     <Compile Include="ModRenamer.cs" />
     <Compile Include="Program.cs" />
@@ -59,12 +60,42 @@
     <Compile Include="Report.cs" />
     <Compile Include="Steam.cs" />
     <Compile Include="XCom2.cs" />
+    <Compile Include="XCom2Browser.cs" />
     <Compile Include="XCom2Edition.cs" />
     <Compile Include="XElementExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24.XCOM_sln">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\%24MODNAME%24.x2proj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Config\XComEditor.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Config\XComEngine.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Config\XComGame.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Src\%24MODNAME%24\Classes\X2DownloadableContentInfo_%24MODNAME%24.uc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="NewModTemplate\%24MODNAME%24\.gitignore">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\ModPreview.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Localization\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
