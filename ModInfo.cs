@@ -64,5 +64,25 @@ namespace XCom2ModTool
 
         // C:\Mods\MyMod\MyMod\Src\MyMod
         public string SourceCodeInnerPath => Path.Combine(SourceCodePath, SourceCodeInnerFolder);
+
+        public static bool FindModForCurrentDirectory(out ModInfo modInfo)
+        {
+            var directory = new DirectoryInfo(Directory.GetCurrentDirectory());
+            while (directory.Parent != null)
+            {
+                var potentialModName = directory.Name;
+                var potentialModPath = directory.FullName;
+                var solutionPath = Path.Combine(potentialModPath, potentialModName + SolutionExtension);
+                if (File.Exists(solutionPath))
+                {
+                    modInfo = new ModInfo(potentialModPath);
+                    return true;
+                }
+                directory = directory.Parent;
+            }
+
+            modInfo = null;
+            return false;
+        }
     }
 }

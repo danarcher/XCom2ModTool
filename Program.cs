@@ -126,13 +126,22 @@ namespace XCom2ModTool
                 args = args.Skip(1).ToArray();
             }
 
-            if (args.Length != 1)
+            ModInfo modInfo = null;
+            if (!ModInfo.FindModForCurrentDirectory(out modInfo) && args.Length != 1)
             {
                 HelpBuild();
                 return;
             }
+            else if (modInfo == null)
+            {
+                modInfo = new ModInfo(args[0]);
+            }
+            else
+            {
+                Report.Verbose($"[{modInfo.RootPath}]");
+            }
 
-            var builder = new ModBuilder(XCom2.Base, new ModInfo(args[0]));
+            var builder = new ModBuilder(XCom2.Base, modInfo);
             builder.Build(full: full);
         }
 
@@ -189,10 +198,12 @@ namespace XCom2ModTool
         private static void HelpBuild()
         {
             Console.WriteLine("To build a mod:");
-            Console.WriteLine($"{Name} build [full] <folder>");
+            Console.WriteLine($"{Name} build [full] [<folder>]");
             Console.WriteLine();
-            Console.WriteLine($"To clean a mod's build:");
-            Console.WriteLine($"{Name} build clean <folder>");
+            Console.WriteLine("To clean a mod's build:");
+            Console.WriteLine($"{Name} build clean [<folder>]");
+            Console.WriteLine();
+            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
         }
 
         private static void HelpOpen()
