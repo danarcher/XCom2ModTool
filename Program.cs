@@ -73,6 +73,9 @@ namespace XCom2ModTool
                     case "open":
                         Open(args.Skip(1).ToArray());
                         return;
+                    case "update-project":
+                        UpdateProject(args.Skip(1).ToArray());
+                        return;
                     default:
                         Report.Error($"{args[0]} is not a {Name} command. See '{Name} --help'.");
                         Environment.ExitCode = 1;
@@ -177,6 +180,28 @@ namespace XCom2ModTool
             XCom2Browser.Browse(args[0]);
         }
 
+        private static void UpdateProject(string[] args)
+        {
+            ModInfo modInfo = null;
+            if (!ModInfo.FindModForCurrentDirectory(out modInfo) && args.Length != 1)
+            {
+                HelpUpdateProject();
+                return;
+            }
+            else if (modInfo == null)
+            {
+                modInfo = new ModInfo(args[0]);
+            }
+            else
+            {
+                Report.Verbose($"[{modInfo.RootPath}]");
+            }
+
+            var project = ModProject.Load(modInfo);
+            project.Update();
+            project.Save(modInfo.ProjectPath);
+        }
+
         private static void Help()
         {
             var indent = new string(' ', Name.Length);
@@ -188,6 +213,7 @@ namespace XCom2ModTool
             Console.WriteLine("  rename         Rename a mod");
             Console.WriteLine("  build          Build a mod");
             Console.WriteLine("  open           Open a specific XCOM folder");
+            Console.WriteLine($"  update-project Update a mod's project file");
             Console.WriteLine();
             Paths();
         }
@@ -211,6 +237,16 @@ namespace XCom2ModTool
             Console.WriteLine();
             Console.WriteLine("To clean a mod's build:");
             Console.WriteLine($"{Name} build clean [<folder>]");
+            Console.WriteLine();
+            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+        }
+
+        private static void HelpUpdateProject()
+        {
+            Console.WriteLine("To update a mod's project:");
+            Console.WriteLine($"{Name} update-project [<folder>]");
+            Console.WriteLine();
+            Console.WriteLine("This sets the project's included files to equal the set of existent files.");
             Console.WriteLine();
             Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
         }

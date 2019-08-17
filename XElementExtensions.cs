@@ -21,5 +21,14 @@ namespace XCom2ModTool
         {
             return element.Attributes().FirstOrDefault(x => string.Equals(x.Name.LocalName, localName, StringComparison.Ordinal));
         }
+
+        // c/o https://stackoverflow.com/a/2874572
+        public static void SetDefaultXmlNamespace(this XElement element, XNamespace xmlns)
+        {
+            if (element.Name.NamespaceName == string.Empty)
+                element.Name = xmlns + element.Name.LocalName;
+            foreach (var child in element.Elements())
+                child.SetDefaultXmlNamespace(xmlns);
+        }
     }
 }

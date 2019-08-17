@@ -4,9 +4,9 @@ namespace XCom2ModTool
 {
     internal class ModInfo
     {
-        private static readonly string SolutionExtension = ".XCOM_sln";
-        private static readonly string SolutionOptionsExtension = ".v12.XCOM_suo";
-        private static readonly string ProjectExtension = ".x2proj";
+        public static readonly string SolutionExtension = ".XCOM_sln";
+        public static readonly string SolutionOptionsExtension = ".v12.XCOM_suo";
+        public static readonly string ProjectExtension = ".x2proj";
         public static readonly string SourceCodeFolder = "Src";
 
         public ModInfo(string path)

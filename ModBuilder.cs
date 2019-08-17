@@ -82,7 +82,7 @@ namespace XCom2ModTool
 
             // Load project first, to check folder structure is as we expect before we start moving files.
             Report.Verbose("Loading project");
-            modProject = ModProject.Load(modInfo.ProjectPath);
+            modProject = ModProject.Load(modInfo);
 
             if (!string.Equals(modProject.Title, modInfo.ModName, StringComparison.Ordinal))
             {
