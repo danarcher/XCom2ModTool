@@ -1,41 +1,136 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Globalization;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Xml.Linq;
 
 namespace XCom2ModTool
 {
     internal class ModBuilder
     {
-        private static string ConfigFolderName = "Config";
-        private static string ContentFolderName = "Content";
-        private static string LocalizationFolderName = "Localization";
-        private static string ScriptFolderName = "Script";
-        private static string ScriptExtension = ".u";
+        private static readonly string ConfigFolderName = "Config";
+        private static readonly string ContentFolderName = "Content";
+        private static readonly string LocalizationFolderName = "Localization";
+        private static readonly string ScriptFolderName = "Script";
+        private static readonly string SourceCodeExtension = ".uc";
+        private static readonly string ScriptExtension = ".u";
+        private static readonly string CompiledScriptManifestName = "Manifest.txt";
 
-        private static string ProjectXmlProperties = "PropertyGroup";
-        private static string ProjectXmlPropertySteamPublishId = "SteamPublishID";
-        private static string ProjectXmlPropertyTitle = "Name";
-        private static string ProjectXmlPropertyDescription = "Description";
+        private static readonly string[] StandardSourceCodeFolderNames = new[]
+        {
+            "AkAudio",
+            "Core",
+            "DLC_1",
+            "DLC_2",
+            "DLC_3",
+            "Engine",
+            "GameFramework",
+            "GFxUI",
+            "GFxUIEditor",
+            "IpDrv",
+            "OnlineSubsystemSteamworks",
+            "TLE",
+            "UnrealEd",
+            "XComEditor",
+            "XComGame",
+        };
+
+        private static readonly string[] StandardCompiledScripts = StandardSourceCodeFolderNames.Select(x => x + ScriptExtension).Union(new[]
+        {
+            "DO_NOT_DELETE.TXT",
+            CompiledScriptManifestName,
+        }).ToArray();
+
+        private static readonly string[] StandardManifestModules = StandardSourceCodeFolderNames.Union(new[]
+        {
+            "WinDrv",
+            "XAudio2",
+        }).ToArray();
 
         private XCom2Edition edition;
+        private Compiler compiler;
         private ModInfo modInfo;
+        private ModProject modProject;
         private string modStagingPath;
         private string modInstallPath;
+
+        private bool modHasSourceCode;
+        private string modStagingCompiledScriptFolderPath = null;
+        private string modSdkCompiledScriptPath = null;
+        private string modStagingCompiledScriptFilePath = null;
 
         public ModBuilder(XCom2Edition edition, ModInfo modInfo)
         {
             this.edition = edition;
             this.modInfo = modInfo;
+            compiler = new Compiler(edition);
             modStagingPath = edition.GetModStagingPath(modInfo);
             modInstallPath = edition.GetModInstallPath(modInfo);
+            modHasSourceCode = Directory.Exists(modInfo.SourceCodeInnerPath) && Directory.EnumerateFiles(modInfo.SourceCodeInnerPath, "*" + SourceCodeExtension, SearchOption.AllDirectories).Any();
+            modStagingCompiledScriptFolderPath = Path.Combine(modStagingPath, ScriptFolderName);
+            modSdkCompiledScriptPath = Path.Combine(edition.SdkXComGameCompiledScriptPath, modInfo.ModName + ScriptExtension);
+            modStagingCompiledScriptFilePath = Path.Combine(modStagingCompiledScriptFolderPath, modInfo.ModName + ScriptExtension);
         }
 
         public void Clean()
+        {
+            CleanModStaging();
+        }
+
+        public void Build(ModBuildType buildType)
+        {
+            Report.Verbose($"{buildType} build of {modInfo.ModName}");
+
+            // Load project first, to check folder structure is as we expect before we start moving files.
+            Report.Verbose("Loading project");
+            modProject = ModProject.Load(modInfo.ProjectPath);
+
+            if (!string.Equals(modProject.Title, modInfo.ModName, StringComparison.Ordinal))
+            {
+                Report.Warning($"Mod name {modInfo.ModName} does not match title '{modProject.Title}' in project {modInfo.ProjectName}");
+            }
+
+            CleanModStaging();
+            Directory.CreateDirectory(modStagingPath);
+            StageModFolder(ConfigFolderName);
+            StageModFolder(ContentFolderName);
+            StageModFolder(LocalizationFolderName);
+            StageModFolder(ModInfo.SourceCodeFolder);
+            StageModMetadata();
+
+            if (modHasSourceCode)
+            {
+                switch (buildType)
+                {
+                    case ModBuildType.Full:
+                        CleanSdkSourceCode();
+                        RestoreSdkSourceCode();
+                        CopyModSourceCodeToSdk();
+                        CleanSdkCompiledScripts();
+                        CompileGame();
+                        break;
+                    case ModBuildType.Fast:
+                        CleanSdkSourceCode();
+                        RestoreSdkSourceCode();
+                        CopyModSourceCodeToSdk();
+                        CleanModSdkCompiledScripts();
+                        CompileGame();
+                        break;
+                    case ModBuildType.Smart:
+                        SmartCleanSdkSourceCode();
+                        CopyModSourceCodeToSdk();
+                        SmartCleanSdkCompiledScripts();
+                        break;
+                }
+
+                CompileMod();
+                // TODO: build shaders if necessary.
+                StageModCompiledScripts();
+            }
+
+            DeployMod();
+        }
+
+        private void CleanModStaging()
         {
             if (Directory.Exists(modStagingPath))
             {
@@ -48,218 +143,150 @@ namespace XCom2ModTool
             }
         }
 
-        public void Build(bool full)
-        {
-            Report.Verbose($"Building {modInfo.ModName}");
-
-            // Load metadata first, to check project structure is as we expect before we start moving files.
-            Report.Verbose("Loading metadata");
-            var projectContents = XDocument.Parse(File.ReadAllText(modInfo.ProjectPath));
-            var projectProperties = projectContents.Root.Local(ProjectXmlProperties);
-            var modSteamPublishId = projectProperties.Local(ProjectXmlPropertySteamPublishId).Value;
-            var modTitle = projectProperties.Local(ProjectXmlPropertyTitle).Value;
-            var modDescription = projectProperties.Local(ProjectXmlPropertyDescription).Value;
-
-            Report.Verbose($"  Title: {modTitle}");
-            Report.Verbose($"  Description: {modDescription}");
-            Report.Verbose($"  Steam Publish ID: {modSteamPublishId}");
-
-            if (!string.Equals(modTitle, modInfo.ModName, StringComparison.Ordinal))
-            {
-                Report.Warning($"Mod name {modInfo.ModName} does not match title '{modTitle}' in project {modInfo.ProjectName}");
-            }
-
-            Clean();
-            StageFolder(ConfigFolderName);
-            StageFolder(ContentFolderName);
-            StageFolder(LocalizationFolderName);
-
-            var hasSourceCode = StageFolder(ModInfo.SourceCodeFolder);
-            string modSourcePath = null;
-            string modStagingScriptFolderPath = null;
-            string modIntermediateCompiledScriptPath = null;
-            string modStagingCompiledScriptPath = null;
-
-            if (hasSourceCode)
-            {
-                modSourcePath = Path.Combine(modInfo.InnerPath, ModInfo.SourceCodeFolder);
-                modStagingScriptFolderPath = Path.Combine(modStagingPath, ScriptFolderName);
-                modIntermediateCompiledScriptPath = Path.Combine(edition.SdkXComGameScriptPath, modInfo.ModName + ScriptExtension);
-                modStagingCompiledScriptPath = Path.Combine(modStagingScriptFolderPath, modInfo.ModName + ScriptExtension);
-                Directory.CreateDirectory(modStagingScriptFolderPath);
-            }
-
-            Report.Verbose("Writing metadata");
-            var metaFileName = modInfo.ModName + ModInfo.MetadataExtension;
-            var metaPath = Path.Combine(modStagingPath, metaFileName);
-            using (var writer = new StreamWriter(metaPath, append: false, Program.DefaultEncoding))
-            {
-                writer.WriteLine("[mod]");
-                writer.WriteLine($"publishedFileId={modSteamPublishId}");
-                writer.WriteLine($"Title={modTitle}");
-                writer.WriteLine($"Description={modDescription}");
-                // TODO: RequiresXPACK=true
-            }
-
-            if (hasSourceCode)
-            {
-                Report.Verbose("Cleaning SDK source");
-                if (Directory.Exists(edition.SdkSourceCodePath))
-                {
-                    Directory.Delete(edition.SdkSourceCodePath, true);
-                }
-
-                Report.Verbose("Copying SDK source");
-                var count = DirectoryHelper.Copy(edition.SdkOriginalSourceCodePath, edition.SdkSourceCodePath);
-                Report.Verbose($"Copied {count} files");
-
-                Report.Verbose("Copying mod source");
-                DirectoryHelper.Copy(modSourcePath, edition.SdkSourceCodePath);
-
-                if (full)
-                {
-                    Report.Verbose("Deleting SDK compiled scripts");
-                    DirectoryHelper.DeleteByExtension(edition.SdkXComGameScriptPath, SearchOption.AllDirectories, StringComparison.OrdinalIgnoreCase, ScriptExtension);
-                }
-                else
-                {
-                    if (File.Exists(modIntermediateCompiledScriptPath))
-                    {
-                        Report.Verbose("Deleting mod compiled script");
-                        File.Delete(modIntermediateCompiledScriptPath);
-                    }
-                }
-
-                Report.Verbose("Compiling game");
-                if (!Compile("make", "-nopause", "-unattended"))
-                {
-                    throw new Exception("Game script compilation failed (bad game source?)");
-                }
-
-                Report.Verbose("Compiling mod");
-                if (!Compile("make", "-nopause", "-mods", modInfo.ModName, modStagingPath))
-                {
-                    throw new Exception("Mod compilation failed");
-                }
-
-                // TODO: build shaders if necessary.
-
-                Report.Verbose("Copying compiled script");
-                File.Copy(modIntermediateCompiledScriptPath, modStagingCompiledScriptPath);
-            }
-
-            Report.Verbose("Deploying mod");
-            if (Directory.Exists(modInstallPath))
-            {
-                Directory.Delete(modInstallPath, true);
-            }
-            DirectoryHelper.Copy(modStagingPath, modInstallPath);
-        }
-
-        private bool StageFolder(string folderName)
+        private bool StageModFolder(string folderName)
         {
             var sourcePath = Path.Combine(modInfo.InnerPath, folderName);
-            var targetPath = Path.Combine(modStagingPath, folderName);
             if (Directory.Exists(sourcePath))
             {
                 Report.Verbose($"Staging {folderName}");
+                var targetPath = Path.Combine(modStagingPath, folderName);
                 DirectoryHelper.Copy(sourcePath, targetPath);
                 return true;
             }
             return false;
         }
 
-        private bool Compile(params string[] args)
+        private void StageModMetadata()
         {
-            for (var i = 0; i < args.Length; ++i)
+            Report.Verbose("Writing metadata");
+            ModMetadata.Save(modProject, Path.Combine(modStagingPath, modInfo.ModName + ModMetadata.Extension));
+        }
+
+        private void CleanSdkSourceCode()
+        {
+            Report.Verbose("Cleaning SDK source");
+            if (Directory.Exists(edition.SdkSourceCodePath))
             {
-                var arg = args[i];
-                var containsQuotes = arg.IndexOf("\"", 0, StringComparison.Ordinal) > 0;
-                var containsSpaces = arg.IndexOf(" ", 0, StringComparison.Ordinal) > 0;
-                if (containsQuotes)
+                Directory.Delete(edition.SdkSourceCodePath, true);
+            }
+            Directory.CreateDirectory(edition.SdkSourceCodePath);
+        }
+
+        private void SmartCleanSdkSourceCode()
+        {
+            Report.Verbose("Smart-cleaning SDK source");
+            foreach (var folderPath in Directory.GetDirectories(edition.SdkSourceCodePath))
+            {
+                var folderName = Path.GetFileName(folderPath);
+                if (!StandardSourceCodeFolderNames.Any(x => string.Equals(x, folderName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    arg = arg.Replace("\"", "\"\"");
+                    Report.Verbose($"  Deleting non-standard source {folderName}");
+                    Directory.Delete(folderPath, true);
                 }
-                if (containsQuotes || containsSpaces)
-                {
-                    arg = $"\"{arg}\"";
-                }
-                args[i] = arg;
             }
 
-            var psi = new ProcessStartInfo();
-            psi.FileName = edition.SdkCompilerPath;
-            psi.Arguments = string.Join(" ", args);
-            psi.UseShellExecute = false;
-            psi.RedirectStandardOutput = true;
-            psi.RedirectStandardError = true;
-
-            Report.Verbose($"> {psi.FileName} {psi.Arguments}");
-            var alive = true;
-
-            void FilterCompilerOutput(string text, TextWriter writer)
+            foreach (var filePath in Directory.GetFiles(edition.SdkSourceCodePath))
             {
-                if (string.IsNullOrWhiteSpace(text) ||
-                    (text.StartsWith("-----") && text.EndsWith("-----") && text.Contains(" - Release")) ||
-                    text.Contains("Executing Class UnrealEd.MakeCommandlet") ||
-                    text.Contains("invalid uniform expression set") ||
-                    text.Contains("Execution of commandlet took") ||
-                    text.Contains("No scripts need recompiling") ||
-                    text.Contains("Analyzing..."))
-                {
-                    return;
-                }
+                Report.Verbose($"  Deleting non-standard file {Path.GetFileName(filePath)}");
+                File.Delete(filePath);
+            }
+        }
 
-                var regex = new Regex(Regex.Escape("Scripts successfully compiled - saving package '") + "(.*)" + Regex.Escape("'"));
-                var match = regex.Match(text);
-                if (match.Success)
+        private void RestoreSdkSourceCode()
+        {
+            Report.Verbose("Restoring SDK source");
+            var count = DirectoryHelper.Copy(edition.SdkOriginalSourceCodePath, edition.SdkSourceCodePath);
+            Report.Verbose($"Restored {count} files");
+        }
+
+        private void CopyModSourceCodeToSdk()
+        {
+            Report.Verbose("Copying mod source");
+            DirectoryHelper.Copy(modInfo.SourceCodePath, edition.SdkSourceCodePath);
+        }
+
+        private void CleanSdkCompiledScripts()
+        {
+            Report.Verbose("Deleting SDK compiled scripts");
+            DirectoryHelper.DeleteByExtension(edition.SdkXComGameCompiledScriptPath, SearchOption.AllDirectories, StringComparison.OrdinalIgnoreCase, ScriptExtension);
+        }
+
+        private void CleanModSdkCompiledScripts()
+        {
+            if (File.Exists(modSdkCompiledScriptPath))
+            {
+                Report.Verbose("Deleting mod compiled script");
+                File.Delete(modSdkCompiledScriptPath);
+            }
+        }
+
+        private void SmartCleanSdkCompiledScripts()
+        {
+            Report.Verbose("Smart-cleaning compiled scripts");
+            foreach (var filePath in Directory.GetFiles(edition.SdkXComGameCompiledScriptPath))
+            {
+                var fileName = Path.GetFileName(filePath);
+                if (!StandardCompiledScripts.Any(x => string.Equals(x, fileName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var fileName = Path.GetFileName(match.Groups[1].Value);
-                    text = $"{fileName} ok";
-                    Report.Verbose(text);
-                    return;
+                    Report.Verbose($"  Deleting non-standard compiled script file {fileName}");
+                    File.Delete(filePath);
                 }
-                else
+            }
+
+            Report.Verbose("Smart-cleaning compiled script manifest");
+            var manifestPath = Path.Combine(edition.SdkXComGameCompiledScriptPath, CompiledScriptManifestName);
+            var lines = File.ReadAllLines(manifestPath).ToList();
+            for (var i = 0; i < lines.Count; ++i)
+            {
+                var line = lines[i];
+                var parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
                 {
-                    regex = new Regex(Regex.Escape("Success - ") + "([0-9]+)" + Regex.Escape(" error(s), ") + "([0-9]+)" + Regex.Escape(" warning(s)"));
-                    match = regex.Match(text);
-                    if (match.Success)
+                    var module = parts[2];
+                    if (!StandardManifestModules.Any(x => string.Equals(x, module, StringComparison.OrdinalIgnoreCase)))
                     {
-                        var errors = int.Parse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture);
-                        var warnings = int.Parse(match.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture);
-                        if (errors == 0 && warnings == 0)
-                        {
-                            return;
-                        }
-                        text = $"{errors} errors and {warnings} warnings";
+                        Report.Verbose($"  Removing line {line}");
+                        lines.RemoveAt(i);
+                        --i;
                     }
                 }
-                writer.WriteLine(text);
             }
+            File.WriteAllLines(manifestPath, lines, Program.DefaultEncoding);
+        }
 
-            var process = new Process();
-            process.OutputDataReceived += (s, e) => FilterCompilerOutput(e.Data, Console.Out);
-            process.ErrorDataReceived += (s, e) => FilterCompilerOutput(e.Data, Console.Error);
-            process.EnableRaisingEvents = true;
-            process.Exited += (s, e) => alive = false;
-            process.StartInfo = psi;
-            if (!process.Start())
+        private void CompileGame()
+        {
+            Report.Verbose("Compiling game");
+            if (!compiler.CompileGame())
             {
-                throw new Exception("Could not start the compiler");
+                throw new Exception("Game script compilation failed (bad game source?)");
             }
+        }
 
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-
-            while (alive)
+        private void CompileMod()
+        {
+            Report.Verbose("Compiling mod");
+            if (!compiler.CompileMod(modInfo.ModName, modStagingPath))
             {
-                Thread.Sleep(50);
+                throw new Exception("Mod compilation failed");
             }
+        }
 
-            var exitCode = process.ExitCode;
-            process.Dispose();
+        private void StageModCompiledScripts()
+        {
+            Report.Verbose("Copying compiled script");
+            Directory.CreateDirectory(modStagingCompiledScriptFolderPath);
+            File.Copy(modSdkCompiledScriptPath, modStagingCompiledScriptFilePath);
+        }
 
-            return exitCode == 0;
+        private void DeployMod()
+        {
+            Report.Verbose("Deploying mod");
+            if (Directory.Exists(modInstallPath))
+            {
+                Directory.Delete(modInstallPath, true);
+            }
+            DirectoryHelper.Copy(modStagingPath, modInstallPath);
         }
     }
 }

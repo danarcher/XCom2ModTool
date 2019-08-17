@@ -68,7 +68,7 @@ namespace XCom2ModTool
 
         public string SdkOriginalSourceCodePath => System.IO.Path.Combine(SdkPath, SdkDevelopmentFolderName, SdkOriginalSourceCodeFolderName);
 
-        public string SdkXComGameScriptPath => System.IO.Path.Combine(SdkXComGamePath, SdkScriptFolderName);
+        public string SdkXComGameCompiledScriptPath => System.IO.Path.Combine(SdkXComGamePath, SdkScriptFolderName);
 
         public string SdkCompilerPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkCompilerName);
 

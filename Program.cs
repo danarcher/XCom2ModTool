@@ -107,22 +107,31 @@ namespace XCom2ModTool
 
         private static void Build(string[] args)
         {
-            if (args.Length == 0)
-            {
-                HelpBuild();
-                return;
-            }
-
-            if (args[0] == "clean")
+            if (args.Length > 0 && args[0] == "clean")
             {
                 BuildClean(args.Skip(1).ToArray());
                 return;
             }
 
-            var full = false;
-            if (args[0] == "full")
+            var buildType = ModBuildType.Smart;
+            while (args.Length > 0)
             {
-                full = true;
+                if (args[0] == "full")
+                {
+                    buildType = ModBuildType.Full;
+                }
+                else if (args[0] == "fast")
+                {
+                    buildType = ModBuildType.Fast;
+                }
+                else if (args[0] == "smart")
+                {
+                    buildType = ModBuildType.Smart;
+                }
+                else
+                {
+                    break;
+                }
                 args = args.Skip(1).ToArray();
             }
 
@@ -142,7 +151,7 @@ namespace XCom2ModTool
             }
 
             var builder = new ModBuilder(XCom2.Base, modInfo);
-            builder.Build(full: full);
+            builder.Build(buildType);
         }
 
         private static void BuildClean(string[] args)
@@ -177,7 +186,7 @@ namespace XCom2ModTool
             Console.WriteLine("Commands:");
             Console.WriteLine("  create         Create a mod");
             Console.WriteLine("  rename         Rename a mod");
-            Console.WriteLine("  build [full]   Build a mod");
+            Console.WriteLine("  build          Build a mod");
             Console.WriteLine("  open           Open a specific XCOM folder");
             Console.WriteLine();
             Paths();
@@ -198,7 +207,7 @@ namespace XCom2ModTool
         private static void HelpBuild()
         {
             Console.WriteLine("To build a mod:");
-            Console.WriteLine($"{Name} build [full] [<folder>]");
+            Console.WriteLine($"{Name} build [full | fast | smart] [<folder>]");
             Console.WriteLine();
             Console.WriteLine("To clean a mod's build:");
             Console.WriteLine($"{Name} build clean [<folder>]");

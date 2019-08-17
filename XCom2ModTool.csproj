@@ -50,12 +50,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler.cs" />
     <Compile Include="DirectoryHelper.cs" />
+    <Compile Include="ModBuildType.cs" />
+    <Compile Include="ModMetadata.cs" />
     <Compile Include="ModBuilder.cs" />
     <Compile Include="ModCreator.cs" />
     <Compile Include="ModInfo.cs" />
     <Compile Include="ModRenamer.cs" />
+    <Compile Include="PathHelper.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ModProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Report.cs" />
     <Compile Include="Steam.cs" />
