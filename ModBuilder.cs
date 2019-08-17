@@ -69,6 +69,7 @@ namespace XCom2ModTool
             modStagingCompiledScriptFolderPath = Path.Combine(modStagingPath, ScriptFolderName);
             modSdkCompiledScriptPath = Path.Combine(edition.SdkXComGameCompiledScriptPath, modInfo.ModName + ScriptExtension);
             modStagingCompiledScriptFilePath = Path.Combine(modStagingCompiledScriptFolderPath, modInfo.ModName + ScriptExtension);
+            compiler.ReplacePaths.Add(edition.SdkSourceCodePath, modInfo.SourceCodePath);
         }
 
         public void Clean()

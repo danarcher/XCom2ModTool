@@ -17,6 +17,8 @@ namespace XCom2ModTool
             this.edition = edition;
         }
 
+        public Dictionary<string, string> ReplacePaths = new Dictionary<string, string>();
+
         public bool CompileGame() => Compile("make", "-nopause", "-unattended");
 
         public bool CompileMod(string modName, string stagingPath) => Compile("make", "-nopause", "-mods", modName, stagingPath);
@@ -84,7 +86,7 @@ namespace XCom2ModTool
             return string.Join(" ", newArgs);
         }
 
-        private static void FilterOutput(string text, TextWriter writer, HashSet<string> duplicates)
+        private void FilterOutput(string text, TextWriter writer, HashSet<string> duplicates)
         {
             if (string.IsNullOrWhiteSpace(text?.Trim('-')) ||
                 (text.StartsWith("-----") && text.EndsWith("-----") && text.Contains(" - Release")) ||
@@ -127,16 +129,23 @@ namespace XCom2ModTool
                 }
                 else
                 {
-                    // Don't duplicate errors or warnings.
+                    // Look for errors/warnings.
                     regex = new Regex(Regex.Escape(" : ") + "(Error|Warning)" + Regex.Escape(", "));
                     match = regex.Match(text);
                     if (match.Success)
                     {
                         if (duplicates.Contains(text))
                         {
+                            // Don't duplicate errors/warnings.
                             return;
                         }
                         duplicates.Add(text);
+
+                        // Replace paths in error/warning messages.
+                        foreach (var item in ReplacePaths)
+                        {
+                            text = Regex.Replace(text, Regex.Escape(item.Key), item.Value.Replace("$", "$$"), RegexOptions.IgnoreCase);
+                        }
                     }
                 }
             }
