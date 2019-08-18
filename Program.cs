@@ -15,6 +15,7 @@ namespace XCom2ModTool
 
         public static Encoding DefaultEncoding { get; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
 
+        [STAThread]
         public static void Main(string[] args)
         {
             try
@@ -171,13 +172,27 @@ namespace XCom2ModTool
 
         private static void Open(string[] args)
         {
+            var copy = false;
+            if (args.Length > 0 && args[0] == "copy")
+            {
+                copy = true;
+                args = args.Skip(1).ToArray();
+            }
+
             if (args.Length != 1)
             {
                 HelpOpen();
                 return;
             }
 
-            XCom2Browser.Browse(args[0]);
+            if (copy)
+            {
+                XCom2Browser.CopyToClipboard(args[0]);
+            }
+            else
+            {
+                XCom2Browser.Browse(args[0]);
+            }
         }
 
         private static void UpdateProject(string[] args)
@@ -255,6 +270,9 @@ namespace XCom2ModTool
         {
             Console.WriteLine("To open a specific XCOM 2 folder:");
             Console.WriteLine($"{Name} open <folder>");
+            Console.WriteLine();
+            Console.WriteLine("To copy a specific XCOM 2 folder to the clipboard:");
+            Console.WriteLine($"{Name} open copy <folder>");
             Console.WriteLine();
             Console.WriteLine("Folders:");
             var folders = XCom2Browser.GetFolders();

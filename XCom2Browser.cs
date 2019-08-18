@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace XCom2ModTool
 {
@@ -22,10 +23,16 @@ namespace XCom2ModTool
             };
         }
 
-        internal static void Browse(string name)
+        public static void Browse(string name)
         {
             var folder = GetFolders().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
             Process.Start(folder.getPath());
+        }
+
+        public static void CopyToClipboard(string name)
+        {
+            var folder = GetFolders().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
+            Clipboard.SetText(folder.getPath());
         }
     }
 }
