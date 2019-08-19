@@ -16,6 +16,7 @@ namespace XCom2ModTool
         private static readonly string SdkCompilerName = "XComGame.com";
         private static readonly string ConfigFolderName = "Config";
         private static readonly string UserConfigPathInDocuments = System.IO.Path.Combine("My Games", "XCOM2", XComGameFolderName, ConfigFolderName);
+        private static readonly string LogPathInDocuments = System.IO.Path.Combine("My Games", "XCOM2", XComGameFolderName, "Logs", "Launch.log");
 
         private string path;
         private string sdkPath;
@@ -73,6 +74,8 @@ namespace XCom2ModTool
         public string SdkCompilerPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkCompilerName);
 
         public string UserConfigPath => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), UserConfigPathInDocuments);
+
+        public string UserLogPath => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), LogPathInDocuments);
 
         public string GetModStagingPath(ModInfo modInfo)
         {

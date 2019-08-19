@@ -59,6 +59,7 @@
     <Compile Include="ModCreator.cs" />
     <Compile Include="ModInfo.cs" />
     <Compile Include="ModRenamer.cs" />
+    <Compile Include="Options.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ModProject.cs" />

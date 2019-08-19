@@ -62,6 +62,11 @@ namespace XCom2ModTool
                         Report.IsVerbose = true;
                         args = args.Skip(1).ToArray();
                         break;
+                    case "--debug":
+                    case "/debug":
+                        Options.Debug = true;
+                        args = args.Skip(1).ToArray();
+                        break;
                     case "create":
                         Create(args.Skip(1).ToArray());
                         return;
@@ -221,7 +226,10 @@ namespace XCom2ModTool
         {
             var indent = new string(' ', Name.Length);
             Console.WriteLine($"usage: {Name} [--version ] [ -h | --help ] [ -v | --verbose ]");
+            Console.WriteLine($"       {indent} [options]");
             Console.WriteLine($"       {indent} <command> [<args>]");
+            Console.WriteLine();
+            Console.WriteLine("Options vary by command.");
             Console.WriteLine();
             Console.WriteLine("Commands:");
             Console.WriteLine("  create         Create a mod");
@@ -248,7 +256,7 @@ namespace XCom2ModTool
         private static void HelpBuild()
         {
             Console.WriteLine("To build a mod:");
-            Console.WriteLine($"{Name} build [full | fast | smart] [<folder>]");
+            Console.WriteLine($"{Name} [--debug] build [full | fast | smart] [<folder>]");
             Console.WriteLine();
             Console.WriteLine("To clean a mod's build:");
             Console.WriteLine($"{Name} build clean [<folder>]");

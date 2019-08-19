@@ -16,6 +16,7 @@ namespace XCom2ModTool
                 ("sdk", $"The {XCom2.Base.SdkDisplayName} folder", () => XCom2.Base.SdkPath),
                 ("sdk-mods", $"The {XCom2.Base.SdkDisplayName} mods folder", () => XCom2.Base.SdkModsPath),
                 ("config", $"The current user's {XCom2.Base.DisplayName} config folder", () => XCom2.Base.UserConfigPath),
+                ("log", $"The current user's {XCom2.Base.DisplayName} log file", () => XCom2.Base.UserLogPath),
                 ("wotc", $"The {XCom2.Wotc.DisplayName} folder", () => XCom2.Wotc.Path),
                 ("wotc-mods", $"The {XCom2.Wotc.DisplayName} mods folder", () => XCom2.Wotc.ModsPath),
                 ("wotc-sdk", $"The {XCom2.Wotc.SdkDisplayName} folder", () => XCom2.Wotc.SdkPath),

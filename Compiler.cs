@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -19,12 +20,17 @@ namespace XCom2ModTool
 
         public Dictionary<string, string> ReplacePaths = new Dictionary<string, string>();
 
-        public bool CompileGame() => Compile("make", "-nopause", "-unattended");
+        public bool CompileGame() => Compile("make", "-debug", "-nopause", "-unattended");
 
-        public bool CompileMod(string modName, string stagingPath) => Compile("make", "-nopause", "-mods", modName, stagingPath);
+        public bool CompileMod(string modName, string stagingPath) => Compile("make", "-debug", "-nopause", "-mods", modName, stagingPath);
 
         private bool Compile(params string[] args)
         {
+            if (!Options.Debug)
+            {
+                args = args.Except(new[] { "-debug" }).ToArray();
+            }
+
             var start = new ProcessStartInfo
             {
                 FileName = edition.SdkCompilerPath,
@@ -89,7 +95,7 @@ namespace XCom2ModTool
         private void FilterOutput(string text, TextWriter writer, HashSet<string> duplicates)
         {
             if (string.IsNullOrWhiteSpace(text?.Trim('-')) ||
-                (text.StartsWith("-----") && text.EndsWith("-----") && text.Contains(" - Release")) ||
+                (text.StartsWith("-----") && text.EndsWith("-----") && (text.Contains(" - Release") || text.Contains(" - Debug"))) ||
                 text.Contains("Executing Class UnrealEd.MakeCommandlet") ||
                 text.Contains("invalid uniform expression set") ||
                 text.Contains("Execution of commandlet took") ||
