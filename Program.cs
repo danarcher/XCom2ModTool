@@ -67,6 +67,11 @@ namespace XCom2ModTool
                         Options.Debug = true;
                         args = args.Skip(1).ToArray();
                         break;
+                    case "--shaders":
+                    case "/shaders":
+                        Options.Shaders = true;
+                        args = args.Skip(1).ToArray();
+                        break;
                     case "create":
                         Create(args.Skip(1).ToArray());
                         return;

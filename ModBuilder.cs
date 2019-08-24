@@ -124,7 +124,10 @@ namespace XCom2ModTool
                 }
 
                 CompileMod();
-                // TODO: build shaders if necessary.
+                if (Options.Shaders)
+                {
+                    CompileShaders();
+                }
                 StageModCompiledScripts();
             }
 
@@ -270,6 +273,15 @@ namespace XCom2ModTool
             if (!compiler.CompileMod(modInfo.ModName, modStagingPath))
             {
                 throw new Exception("Mod compilation failed");
+            }
+        }
+
+        private void CompileShaders()
+        {
+            Report.Verbose("Compiling shaders");
+            if (!compiler.CompileShaders(modInfo.ModName))
+            {
+                throw new Exception("Shader compilation failed");
             }
         }
 

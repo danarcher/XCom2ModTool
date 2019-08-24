@@ -24,6 +24,8 @@ namespace XCom2ModTool
 
         public bool CompileMod(string modName, string stagingPath) => Compile("make", "-debug", "-nopause", "-mods", modName, stagingPath);
 
+        public bool CompileShaders(string modName) => Compile("precompileshaders", "-nopause", "platform=pc_sm4", $"DLC={modName}");
+
         private bool Compile(params string[] args)
         {
             if (!Options.Debug)
@@ -97,12 +99,19 @@ namespace XCom2ModTool
             if (string.IsNullOrWhiteSpace(text?.Trim('-')) ||
                 (text.StartsWith("-----") && text.EndsWith("-----") && (text.Contains(" - Release") || text.Contains(" - Debug"))) ||
                 text.Contains("Executing Class UnrealEd.MakeCommandlet") ||
+                text.Contains("Executing Class UnrealEd.PrecompileShadersCommandlet") ||
                 text.Contains("invalid uniform expression set") ||
                 text.Contains("Execution of commandlet took") ||
                 text.Contains("No scripts need recompiling") ||
                 text.Contains("Analyzing...") ||
                 text.Contains("Compile aborted due to errors") ||
-                text.Contains("Warning/Error Summary"))
+                text.Contains("Warning/Error Summary") ||
+                text.Contains("Compiling shaders for") ||
+                text.Contains("Starting package") ||
+                text.Contains("Package processing complete") ||
+                (text.Contains(" = ") && text.Contains(" min")) ||
+                text.Contains("NumFullyLoadedPackages") ||
+                text.Contains("NumFastPackages"))
             {
                 // None of these lines are interesting.
                 return;
