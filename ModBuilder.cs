@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace XCom2ModTool
 {
     internal class ModBuilder
     {
-        private static readonly string ConfigFolderName = "Config";
-        private static readonly string ContentFolderName = "Content";
-        private static readonly string LocalizationFolderName = "Localization";
         private static readonly string ScriptFolderName = "Script";
-        private static readonly string SourceCodeExtension = ".uc";
         private static readonly string ScriptExtension = ".u";
         private static readonly string CompiledScriptManifestName = "Manifest.txt";
+        private static readonly string KeyStandardPackageCompiledScriptFileName = "Core" + ScriptExtension;
 
         private static readonly string[] StandardSourceCodeFolderNames = new[]
         {
@@ -34,18 +31,19 @@ namespace XCom2ModTool
             "XComGame",
         };
 
-        private static readonly string[] StandardCompiledScripts = StandardSourceCodeFolderNames.Select(x => x + ScriptExtension).Union(new[]
+        private static readonly string[] StandardCompiledScripts = StandardSourceCodeFolderNames.Select(x => x + ScriptExtension).Concat(new[]
         {
             "DO_NOT_DELETE.TXT",
             CompiledScriptManifestName,
         }).ToArray();
 
-        private static readonly string[] StandardManifestModules = StandardSourceCodeFolderNames.Union(new[]
+        private static readonly string[] StandardManifestModules = StandardSourceCodeFolderNames.Concat(new[]
         {
             "WinDrv",
             "XAudio2",
         }).ToArray();
 
+        private CancellationToken cancellation;
         private XCom2Edition edition;
         private Compiler compiler;
         private ModInfo modInfo;
@@ -54,18 +52,21 @@ namespace XCom2ModTool
         private string modInstallPath;
 
         private bool modHasSourceCode;
+        private bool modHasShaderContent;
         private string modStagingCompiledScriptFolderPath = null;
         private string modSdkCompiledScriptPath = null;
         private string modStagingCompiledScriptFilePath = null;
 
-        public ModBuilder(XCom2Edition edition, ModInfo modInfo)
+        public ModBuilder(XCom2Edition edition, ModInfo modInfo, CancellationToken cancellation)
         {
             this.edition = edition;
             this.modInfo = modInfo;
+            this.cancellation = cancellation;
             compiler = new Compiler(edition);
             modStagingPath = edition.GetModStagingPath(modInfo);
             modInstallPath = edition.GetModInstallPath(modInfo);
-            modHasSourceCode = Directory.Exists(modInfo.SourceCodeInnerPath) && Directory.EnumerateFiles(modInfo.SourceCodeInnerPath, "*" + SourceCodeExtension, SearchOption.AllDirectories).Any();
+            modHasSourceCode = modInfo.HasSourceCode();
+            modHasShaderContent = modInfo.HasShaderContent();
             modStagingCompiledScriptFolderPath = Path.Combine(modStagingPath, ScriptFolderName);
             modSdkCompiledScriptPath = Path.Combine(edition.SdkXComGameCompiledScriptPath, modInfo.ModName + ScriptExtension);
             modStagingCompiledScriptFilePath = Path.Combine(modStagingCompiledScriptFolderPath, modInfo.ModName + ScriptExtension);
@@ -76,6 +77,8 @@ namespace XCom2ModTool
         {
             CleanModStaging();
         }
+
+        private void ThrowIfCancelled() => cancellation.ThrowIfCancellationRequested();
 
         public void Build(ModBuildType buildType)
         {
@@ -91,12 +94,15 @@ namespace XCom2ModTool
             }
 
             CleanModStaging();
+            ThrowIfCancelled();
+
             Directory.CreateDirectory(modStagingPath);
-            StageModFolder(ConfigFolderName);
-            StageModFolder(ContentFolderName);
-            StageModFolder(LocalizationFolderName);
             StageModFolder(ModInfo.SourceCodeFolder);
+            StageModFolder(ModInfo.ConfigFolder);
+            StageModFolder(ModInfo.LocalizationFolder);
+            StageModFolder(ModInfo.ContentFolder);
             StageModMetadata();
+            ThrowIfCancelled();
 
             if (modHasSourceCode)
             {
@@ -117,6 +123,17 @@ namespace XCom2ModTool
                         CompileGame();
                         break;
                     case ModBuildType.Smart:
+                        var flags = GetBuiltStandardPackageFlags();
+                        if (!flags.HasValue)
+                        {
+                            Report.Verbose($"{KeyStandardPackageCompiledScriptFileName} invalid or not found, switching to full build");
+                            goto case ModBuildType.Full;
+                        }
+                        if (Options.Debug != flags.Value.HasFlag(PackageFlags.Debug))
+                        {
+                            Options.Debug = !Options.Debug;
+                            Report.Verbose($"Detected {(Options.Debug ? "debug" : "release")} build of {KeyStandardPackageCompiledScriptFileName}");
+                        }
                         SmartCleanSdkSourceCode();
                         CopyModSourceCodeToSdk();
                         SmartCleanSdkCompiledScripts();
@@ -124,11 +141,12 @@ namespace XCom2ModTool
                 }
 
                 CompileMod();
-                if (Options.Shaders)
+                if (modHasShaderContent)
                 {
                     CompileShaders();
                 }
                 StageModCompiledScripts();
+                SmartCleanSdkSourceCode();
             }
 
             DeployMod();
@@ -139,7 +157,7 @@ namespace XCom2ModTool
             if (Directory.Exists(modStagingPath))
             {
                 Report.Verbose($"Cleaning staging folder");
-                Directory.Delete(modStagingPath, true);
+                DirectoryHelper.Delete(modStagingPath);
             }
             else
             {
@@ -169,10 +187,7 @@ namespace XCom2ModTool
         private void CleanSdkSourceCode()
         {
             Report.Verbose("Cleaning SDK source");
-            if (Directory.Exists(edition.SdkSourceCodePath))
-            {
-                Directory.Delete(edition.SdkSourceCodePath, true);
-            }
+            DirectoryHelper.Delete(edition.SdkSourceCodePath);
             Directory.CreateDirectory(edition.SdkSourceCodePath);
         }
 
@@ -185,14 +200,14 @@ namespace XCom2ModTool
                 if (!StandardSourceCodeFolderNames.Any(x => string.Equals(x, folderName, StringComparison.OrdinalIgnoreCase)))
                 {
                     Report.Verbose($"  Deleting non-standard source {folderName}");
-                    Directory.Delete(folderPath, true);
+                    DirectoryHelper.Delete(folderPath);
                 }
             }
 
             foreach (var filePath in Directory.GetFiles(edition.SdkSourceCodePath))
             {
                 Report.Verbose($"  Deleting non-standard file {Path.GetFileName(filePath)}");
-                File.Delete(filePath);
+                DirectoryHelper.Delete(filePath);
             }
         }
 
@@ -220,7 +235,20 @@ namespace XCom2ModTool
             if (File.Exists(modSdkCompiledScriptPath))
             {
                 Report.Verbose("Deleting mod compiled script");
-                File.Delete(modSdkCompiledScriptPath);
+                DirectoryHelper.Delete(modSdkCompiledScriptPath);
+            }
+        }
+
+        private PackageFlags? GetBuiltStandardPackageFlags()
+        {
+            try
+            {
+                var info = new PackageInfo(Path.Combine(edition.SdkXComGameCompiledScriptPath, KeyStandardPackageCompiledScriptFileName));
+                return info.IsValid ? info.Flags : (PackageFlags?)null;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
@@ -233,7 +261,12 @@ namespace XCom2ModTool
                 if (!StandardCompiledScripts.Any(x => string.Equals(x, fileName, StringComparison.OrdinalIgnoreCase)))
                 {
                     Report.Verbose($"  Deleting non-standard compiled script file {fileName}");
-                    File.Delete(filePath);
+                    DirectoryHelper.Delete(filePath);
+                }
+                else
+                {
+                    var info = new PackageInfo(filePath);
+                    Report.Verbose($"{fileName} {info}");
                 }
             }
 
@@ -260,29 +293,35 @@ namespace XCom2ModTool
 
         private void CompileGame()
         {
+            ThrowIfCancelled();
             Report.Verbose("Compiling game");
             if (!compiler.CompileGame())
             {
                 throw new Exception("Game script compilation failed (bad game source?)");
             }
+            ThrowIfCancelled();
         }
 
         private void CompileMod()
         {
+            ThrowIfCancelled();
             Report.Verbose("Compiling mod");
             if (!compiler.CompileMod(modInfo.ModName, modStagingPath))
             {
                 throw new Exception("Mod compilation failed");
             }
+            ThrowIfCancelled();
         }
 
         private void CompileShaders()
         {
+            ThrowIfCancelled();
             Report.Verbose("Compiling shaders");
             if (!compiler.CompileShaders(modInfo.ModName))
             {
                 throw new Exception("Shader compilation failed");
             }
+            ThrowIfCancelled();
         }
 
         private void StageModCompiledScripts()
@@ -295,10 +334,7 @@ namespace XCom2ModTool
         private void DeployMod()
         {
             Report.Verbose("Deploying mod");
-            if (Directory.Exists(modInstallPath))
-            {
-                Directory.Delete(modInstallPath, true);
-            }
+            DirectoryHelper.Delete(modInstallPath);
             DirectoryHelper.Copy(modStagingPath, modInstallPath);
         }
     }

@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 
 namespace XCom2ModTool
 {
@@ -7,7 +9,13 @@ namespace XCom2ModTool
         public static readonly string SolutionExtension = ".XCOM_sln";
         public static readonly string SolutionOptionsExtension = ".v12.XCOM_suo";
         public static readonly string ProjectExtension = ".x2proj";
+        public static readonly string SourceCodeExtension = ".uc";
+        public static readonly string PackageExtension = ".upk";
+        public static readonly string MapExtension = ".umap";
         public static readonly string SourceCodeFolder = "Src";
+        public static readonly string ContentFolder = "Content";
+        public static readonly string ConfigFolder = "Config";
+        public static readonly string LocalizationFolder = "Localization";
 
         public ModInfo(string path)
         {
@@ -63,6 +71,30 @@ namespace XCom2ModTool
 
         // C:\Mods\MyMod\MyMod\Src\MyMod
         public string SourceCodeInnerPath => Path.Combine(SourceCodePath, SourceCodeInnerFolder);
+
+        // C:\Mods\MyMod\MyMod\Content
+        public string ContentPath => Path.Combine(InnerPath, ContentFolder);
+
+        // C:\Mods\MyMod\MyMod\Config
+        public string ConfigPath => Path.Combine(InnerPath, ConfigFolder);
+
+        // C:\Mods\MyMod\MyMod\Localization
+        public string LocalizationPath => Path.Combine(InnerPath, LocalizationFolder);
+
+        public bool HasSourceCode()
+        {
+            return Directory.Exists(SourceCodeInnerPath) &&
+                   Directory.EnumerateFiles(SourceCodeInnerPath, "*" + SourceCodeExtension, SearchOption.AllDirectories).Any();
+        }
+
+        public bool HasShaderContent()
+        {
+            return Directory.Exists(ContentPath) && 
+                   Directory.EnumerateFiles(ContentPath, "*.*", SearchOption.AllDirectories)
+                            .Select(x => Path.GetExtension(x))
+                            .Any(x => string.Equals(x, PackageExtension, StringComparison.OrdinalIgnoreCase) || 
+                                      string.Equals(x, MapExtension, StringComparison.OrdinalIgnoreCase));
+        }
 
         public static bool FindModForCurrentDirectory(out ModInfo modInfo)
         {

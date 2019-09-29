@@ -43,7 +43,7 @@ namespace XCom2ModTool
             }
 
             var document = XDocument.Parse(File.ReadAllText(modInfo.ProjectPath));
-            var properties = document.Root.GetElementsByLocalName(XmlPropertyGroup).Single();
+            var properties = document.Root.GetElementsByLocalName(XmlPropertyGroup).First();
 
             var folderPath = Path.GetDirectoryName(modInfo.ProjectPath);
             var itemGroups = document.Root.GetElementsByLocalName(XmlItemGroup);

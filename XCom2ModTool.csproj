@@ -60,6 +60,7 @@
     <Compile Include="ModInfo.cs" />
     <Compile Include="ModRenamer.cs" />
     <Compile Include="Options.cs" />
+    <Compile Include="PackageInfo.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ModProject.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="XCom2.cs" />
     <Compile Include="XCom2Browser.cs" />
     <Compile Include="XCom2Edition.cs" />
+    <Compile Include="XCom2Editor.cs" />
     <Compile Include="XElementExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

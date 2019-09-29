@@ -32,8 +32,21 @@ namespace XCom2ModTool
                                           .Select(x => new FileInfo(x))
                                           .Where(x => extensions.Any(y => string.Equals(x.Extension, y, comparison))))
             {
-                File.SetAttributes(file.FullName, FileAttributes.Normal);
-                File.Delete(file.FullName);
+                Delete(file.FullName);
+            }
+        }
+
+        public static void Delete(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                DeleteDirectoryContents(path);
+                Directory.Delete(path, true);
+            }
+            else if (File.Exists(path))
+            {
+                File.SetAttributes(path, FileAttributes.Normal);
+                File.Delete(path);
             }
         }
 
@@ -70,6 +83,18 @@ namespace XCom2ModTool
             if (!string.Equals(projectText, newProjectText, StringComparison.Ordinal))
             {
                 File.WriteAllText(path, newProjectText, Program.DefaultEncoding);
+            }
+        }
+
+        public static void DeleteDirectoryContents(string path)
+        {
+            foreach (var filePath in Directory.GetFiles(path, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                Delete(filePath);
+            }
+            foreach (var folderPath in Directory.GetDirectories(path, "*", SearchOption.TopDirectoryOnly))
+            {
+                Delete(folderPath);
             }
         }
 

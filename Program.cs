@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace XCom2ModTool
 {
@@ -37,6 +38,13 @@ namespace XCom2ModTool
 
         private static void Run(string[] args)
         {
+            CancellationTokenSource cancellation = new CancellationTokenSource();
+            Console.CancelKeyPress += (s, e) =>
+            {
+                e.Cancel = true;
+                cancellation.Cancel();
+            };
+
             while (args.Length > 0)
             {
                 switch (args[0])
@@ -67,11 +75,6 @@ namespace XCom2ModTool
                         Options.Debug = true;
                         args = args.Skip(1).ToArray();
                         break;
-                    case "--shaders":
-                    case "/shaders":
-                        Options.Shaders = true;
-                        args = args.Skip(1).ToArray();
-                        break;
                     case "create":
                         Create(args.Skip(1).ToArray());
                         return;
@@ -79,7 +82,7 @@ namespace XCom2ModTool
                         Rename(args.Skip(1).ToArray());
                         return;
                     case "build":
-                        Build(args.Skip(1).ToArray());
+                        Build(args.Skip(1).ToArray(), cancellation.Token);
                         return;
                     case "open":
                         Open(args.Skip(1).ToArray());
@@ -119,11 +122,11 @@ namespace XCom2ModTool
             ModRenamer.Rename(args[0], args[1]);
         }
 
-        private static void Build(string[] args)
+        private static void Build(string[] args, CancellationToken cancellation)
         {
             if (args.Length > 0 && args[0] == "clean")
             {
-                BuildClean(args.Skip(1).ToArray());
+                BuildClean(args.Skip(1).ToArray(), cancellation);
                 return;
             }
 
@@ -164,11 +167,11 @@ namespace XCom2ModTool
                 Report.Verbose($"[{modInfo.RootPath}]");
             }
 
-            var builder = new ModBuilder(XCom2.Base, modInfo);
+            var builder = new ModBuilder(XCom2.Base, modInfo, cancellation);
             builder.Build(buildType);
         }
 
-        private static void BuildClean(string[] args)
+        private static void BuildClean(string[] args, CancellationToken cancellation)
         {
             if (args.Length != 1)
             {
@@ -176,7 +179,7 @@ namespace XCom2ModTool
                 return;
             }
 
-            var builder = new ModBuilder(XCom2.Base, new ModInfo(args[0]));
+            var builder = new ModBuilder(XCom2.Base, new ModInfo(args[0]), cancellation);
             builder.Clean();
         }
 
@@ -281,14 +284,14 @@ namespace XCom2ModTool
 
         private static void HelpOpen()
         {
-            Console.WriteLine("To open a specific XCOM 2 folder:");
-            Console.WriteLine($"{Name} open <folder>");
+            Console.WriteLine("To open a specific XCOM 2 folder or program:");
+            Console.WriteLine($"{Name} open <name>");
             Console.WriteLine();
-            Console.WriteLine("To copy a specific XCOM 2 folder to the clipboard:");
-            Console.WriteLine($"{Name} open copy <folder>");
+            Console.WriteLine("To copy a specific XCOM 2 path to the clipboard:");
+            Console.WriteLine($"{Name} open copy <name>");
             Console.WriteLine();
-            Console.WriteLine("Folders:");
-            var folders = XCom2Browser.GetFolders();
+            Console.WriteLine("Names:");
+            var folders = XCom2Browser.GetPaths();
             var length = folders.Max(x => x.name.Length) + 2;
             foreach (var folder in folders)
             {

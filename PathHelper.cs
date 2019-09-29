@@ -50,5 +50,26 @@ namespace XCom2ModTool
             var folderUri = new Uri(parentFolderPath);
             return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
         }
+
+        public static string EscapeAndJoinArguments(string[] args)
+        {
+            var newArgs = new string[args.Length];
+            for (var i = 0; i < args.Length; ++i)
+            {
+                var arg = args[i];
+                var containsQuotes = arg.IndexOf("\"", 0, StringComparison.Ordinal) > 0;
+                var containsSpaces = arg.IndexOf(" ", 0, StringComparison.Ordinal) > 0;
+                if (containsQuotes)
+                {
+                    arg = arg.Replace("\"", "\"\"");
+                }
+                if (containsQuotes || containsSpaces)
+                {
+                    arg = $"\"{arg}\"";
+                }
+                newArgs[i] = arg;
+            }
+            return string.Join(" ", newArgs);
+        }
     }
 }

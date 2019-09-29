@@ -36,7 +36,7 @@ namespace XCom2ModTool
             var start = new ProcessStartInfo
             {
                 FileName = edition.SdkCompilerPath,
-                Arguments = EscapeAndJoinArguments(args),
+                Arguments = PathHelper.EscapeAndJoinArguments(args),
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
@@ -68,30 +68,10 @@ namespace XCom2ModTool
             }
 
             var exitCode = process.ExitCode;
+            Report.Verbose($"Compiler process exit code {exitCode}, HasExited={process.HasExited}");
             process.Dispose();
 
             return exitCode == 0;
-        }
-
-        private static string EscapeAndJoinArguments(string[] args)
-        {
-            var newArgs = new string[args.Length];
-            for (var i = 0; i < args.Length; ++i)
-            {
-                var arg = args[i];
-                var containsQuotes = arg.IndexOf("\"", 0, StringComparison.Ordinal) > 0;
-                var containsSpaces = arg.IndexOf(" ", 0, StringComparison.Ordinal) > 0;
-                if (containsQuotes)
-                {
-                    arg = arg.Replace("\"", "\"\"");
-                }
-                if (containsQuotes || containsSpaces)
-                {
-                    arg = $"\"{arg}\"";
-                }
-                newArgs[i] = arg;
-            }
-            return string.Join(" ", newArgs);
         }
 
         private void FilterOutput(string text, TextWriter writer, HashSet<string> duplicates)
