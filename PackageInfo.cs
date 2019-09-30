@@ -14,11 +14,14 @@ namespace XCom2ModTool
                 try
                 {
                     Signature = reader.ReadUInt32();
-                    Version = reader.ReadUInt16();
-                    LicenseeVersion = reader.ReadUInt16();
-                    HeaderSize = reader.ReadUInt32();
-                    Group = ReadFString(reader);
-                    Flags = (PackageFlags)reader.ReadUInt32();
+                    if (Signature == ValidSignature)
+                    {
+                        Version = reader.ReadUInt16();
+                        LicenseeVersion = reader.ReadUInt16();
+                        HeaderSize = reader.ReadUInt32();
+                        Group = ReadFString(reader);
+                        Flags = (PackageFlags)reader.ReadUInt32();
+                    }
                 }
                 catch (Exception)
                 {
