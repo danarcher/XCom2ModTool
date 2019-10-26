@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Compiler.cs" />
     <Compile Include="DirectoryHelper.cs" />
+    <Compile Include="BZip2Crc.cs" />
     <Compile Include="ModBuildType.cs" />
     <Compile Include="ModMetadata.cs" />
     <Compile Include="ModBuilder.cs" />
@@ -66,6 +67,7 @@
     <Compile Include="ModProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Report.cs" />
+    <Compile Include="SaveGameInfo.cs" />
     <Compile Include="Steam.cs" />
     <Compile Include="XCom2.cs" />
     <Compile Include="XCom2Browser.cs" />
@@ -102,6 +104,7 @@
     <Content Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\ModPreview.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="SaveGameFormat.txt" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Localization\" />

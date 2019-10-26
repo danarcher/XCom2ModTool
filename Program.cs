@@ -90,6 +90,9 @@ namespace XCom2ModTool
                     case "update-project":
                         UpdateProject(args.Skip(1).ToArray());
                         return;
+                    case "save-info":
+                        SaveInfo(args.Skip(1).ToArray());
+                        return;
                     default:
                         Report.Error($"{args[0]} is not a {Name} command. See '{Name} --help'.");
                         Environment.ExitCode = 1;
@@ -230,6 +233,25 @@ namespace XCom2ModTool
             project.Save(modInfo.ProjectPath);
         }
 
+        private static void SaveInfo(string[] args)
+        {
+            if (args.Length != 1)
+            {
+                HelpSaveInfo();
+                return;
+            }
+
+            var path = args[0];
+            var info = new SaveGameInfo(path);
+            var json = info.ToJson();
+            var lines = json.Split('\n');
+            foreach (var line in lines)
+            {
+                var text = line.Trim('\r');
+                Console.WriteLine(text);
+            }
+        }
+
         private static void Help()
         {
             var indent = new string(' ', Name.Length);
@@ -245,6 +267,7 @@ namespace XCom2ModTool
             Console.WriteLine("  build          Build a mod");
             Console.WriteLine("  open           Open a specific XCOM folder");
             Console.WriteLine($"  update-project Update a mod's project file");
+            Console.WriteLine("  save-info  Display info on a save file");
             Console.WriteLine();
             Paths();
         }
@@ -280,6 +303,12 @@ namespace XCom2ModTool
             Console.WriteLine("This sets the project's included files to equal the set of existent files.");
             Console.WriteLine();
             Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+        }
+
+        private static void HelpSaveInfo()
+        {
+            Console.WriteLine("To display info on a save file:");
+            Console.WriteLine($"{Name} save-info <file>");
         }
 
         private static void HelpOpen()

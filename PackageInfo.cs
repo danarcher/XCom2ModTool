@@ -29,7 +29,7 @@ namespace XCom2ModTool
             }
         }
 
-        private static string ReadFString(BinaryReader reader)
+        public static string ReadFString(BinaryReader reader)
         {
             var text = string.Empty;
             var length = reader.ReadInt32();
