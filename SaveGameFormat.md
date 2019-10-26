@@ -33,40 +33,40 @@ DLCPackFriendlyNames.
 
 ## Save Game Header
 
-| Version | Offset | Type    | Description |
-| ------- | ------ | ------- | ----------- |
-| 20+     | 0      | DWORD   | Version (20 for base game, 21 for WoTC, 22 for Recent WoTC / TLP) |
-| 20+     | 4      | DWORD   | Header byte count, i.e. offset to start of UPK from start of file |
-| 20+     | 8      | DWORD   | Header checksum (uses the BZip2 CRC32 algorithm) |
-| 20+     | 12     | DWORD   | Uncompressed Size (may be zero) |
-| 20+     | 16     | DWORD   | Campaign Number |
-| 20+     | 20     | DWORD   | Save Slot Number |
-| 20+     | 28     | PZStr   | Description (Date\nTime\nPlayer Save Name\nMission Type Name\nOperation Name\nGame Date\nGame Time\sMap Name\s |
-| 20+     | -      | PZStr   | Save DateTime (Date\nTime) |
-| 20+     | -      | PZStr   | Map Command |
-| 20+     | -      | BOOL    | Tactical (0=Strategy, 1=Tactical) |
-| 20+     | -      | BOOL    | Ironman (0=Normal, 1=Ironman)|
-| 20+     | -      | BOOL    | Autosave (0=Manual, 1=Autosave) |
-| 20+     | -      | BOOL    | Quicksave (0=Normal, 1=Quick)|
-| 20+     | -      | PZStr   | Language (e.g. "INT") |
-| 20+     | -      | DWORD   | Unknown6 (Negative number? Random seed?) |
-| 20+     | -      | DWORD   | Unknown7 (0) |
-| 20+     | -      | DWORD   | ArchiveFileVersion (845) |
-| 20+     | -      | DWORD   | ArchiveLicenseeVersion (e.g. 108 for base game, 120 for WoTC, ...?) |
-| 20+     | -      | PZStr   | Campaign Start DateTime (e.g. 2019.08.05-21.16.32.2) |
-| 20+     | -      | PZStr   | Mission Image URI |
-| 20+     | -      | PZStr   | Player Save Name (again) |
-| 20+     | -      | PZStr[] | DLC Pack Names |
-| 20+     | -      | PZStr[] | DLC Pack Friendly Names |
-| 21+     | -      | DWORD   | Mission Number (-1 for Tactical Quick Launch |
-| 21+     | -      | DWORD   | Month |
-| 21+     | -      | DWORD   | Turn |
-| 21+     | -      | DWORD   | Action |
-| 21+     | -      | PZStr   | Mission Type |
-| 21+     | -      | BOOL    | Debug Save (0=Normal, 1=Debug) |
-| 21+     | -      | BOOL    | Pre Mission |
-| 21+     | -      | BOOL    | Post Mission |
-| 22+     | -      | BOOL    | Ladder |
+| Version | Offset | Type      | Description |
+| ------- | ------ | --------- | ----------- |
+| 20+     | 0      | DWORD     | Version (20 for base game, 21 for WoTC, 22 for Recent WoTC / TLP) |
+| 20+     | 4      | DWORD     | Header byte count, i.e. offset to start of UPK from start of file |
+| 20+     | 8      | DWORD     | Header checksum (uses the BZip2 CRC32 algorithm) |
+| 20+     | 12     | DWORD     | Uncompressed Size (may be zero) |
+| 20+     | 16     | DWORD     | Campaign Number |
+| 20+     | 20     | DWORD     | Save Slot Number |
+| 20+     | 28     | FString   | Description (Date\nTime\nPlayer Save Name\nMission Type Name\nOperation Name\nGame Date\nGame Time\sMap Name\s |
+| 20+     | -      | FString   | Save DateTime (Date\nTime) |
+| 20+     | -      | FString   | Map Command |
+| 20+     | -      | BOOL      | Tactical (0=Strategy, 1=Tactical) |
+| 20+     | -      | BOOL      | Ironman (0=Normal, 1=Ironman)|
+| 20+     | -      | BOOL      | Autosave (0=Manual, 1=Autosave) |
+| 20+     | -      | BOOL      | Quicksave (0=Normal, 1=Quick)|
+| 20+     | -      | FString   | Language (e.g. "INT") |
+| 20+     | -      | DWORD     | Unknown6 (Negative number? Random seed?) |
+| 20+     | -      | DWORD     | Unknown7 (0) |
+| 20+     | -      | DWORD     | ArchiveFileVersion (845) |
+| 20+     | -      | DWORD     | ArchiveLicenseeVersion (e.g. 108 for base game, 120 for WoTC, ...?) |
+| 20+     | -      | FString   | Campaign Start DateTime (e.g. 2019.08.05-21.16.32.2) |
+| 20+     | -      | FString   | Mission Image URI |
+| 20+     | -      | FString   | Player Save Name (again) |
+| 20+     | -      | FString[] | DLC Pack Names |
+| 20+     | -      | FString[] | DLC Pack Friendly Names |
+| 21+     | -      | DWORD     | Mission Number (-1 for Tactical Quick Launch) |
+| 21+     | -      | DWORD     | Month |
+| 21+     | -      | DWORD     | Turn |
+| 21+     | -      | DWORD     | Action |
+| 21+     | -      | FString   | Mission Type |
+| 21+     | -      | BOOL      | Debug Save (0=Normal, 1=Debug) |
+| 21+     | -      | BOOL      | Pre Mission |
+| 21+     | -      | BOOL      | Post Mission |
+| 22+     | -      | BOOL      | Ladder |
 
 ## UPK
 
