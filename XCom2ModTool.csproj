@@ -12,6 +12,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -22,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\Release\</OutputPath>
@@ -32,6 +34,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Gameloop.Vdf, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -39,6 +42,9 @@
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Simplicit.Net.Lzo">
+      <HintPath>vendor\Simplicit.Net.Lzo.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -51,9 +57,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryDataReader.cs" />
     <Compile Include="Compiler.cs" />
     <Compile Include="DirectoryHelper.cs" />
     <Compile Include="BZip2Crc.cs" />
+    <Compile Include="HexJsonConverter.cs" />
+    <Compile Include="AbbreviatedByteArrayJsonConverter.cs" />
     <Compile Include="ModBuildType.cs" />
     <Compile Include="ModMetadata.cs" />
     <Compile Include="ModBuilder.cs" />
@@ -61,14 +70,21 @@
     <Compile Include="ModInfo.cs" />
     <Compile Include="ModRenamer.cs" />
     <Compile Include="Options.cs" />
-    <Compile Include="PackageInfo.cs" />
+    <Compile Include="Lzo.cs" />
+    <Compile Include="SaveGameReader.cs" />
+    <Compile Include="UnrealPackages\CompressedBlock.cs" />
+    <Compile Include="UnrealPackages\PackageHeader.cs" />
+    <Compile Include="UnrealPackages\PackageReader.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ModProject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Report.cs" />
-    <Compile Include="SaveGameInfo.cs" />
+    <Compile Include="SaveGame.cs" />
     <Compile Include="Steam.cs" />
+    <Compile Include="UnrealPackages\PackageFlags.cs" />
+    <Compile Include="UnrealPackages\CompressedChunk.cs" />
+    <Compile Include="UnrealPackages\PackageSignature.cs" />
     <Compile Include="XCom2.cs" />
     <Compile Include="XCom2Browser.cs" />
     <Compile Include="XCom2Edition.cs" />
@@ -99,15 +115,16 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+    <None Include="SaveGameFormat.md" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\ModPreview.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="SaveGameFormat.txt" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="NewModTemplate\%24MODNAME%24\%24MODNAME%24\Localization\" />
+    <Folder Include="vendor\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

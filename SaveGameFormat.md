@@ -1,13 +1,12 @@
 ﻿# XCOM 2 Save Game File Format
 
 Documented by Dan Archer, https://github.com/danarcher. This information was
-pieced together through elementary reverse engineering, with marginal help from
-online sources regarding the XCOM: Enemy Unknown save format. Grepping the SDK
-source code for "CRC" (or even "SaveGame") from the start would have yielded
-faster results...
+initially pieced together through elementary reverse engineering, with later
+help from online sources regarding the XCOM: Enemy Unknown save format,
+http://wiki.tesnexus.com/index.php/Savegame_file_format_-_XCOM:EU_2012.
 
 XCOM 2 save games consist of a variable-length header followed immediately by a
-UPK.
+series of compressed chunks of data.
 
 On the PC at least, the format is little-endian.
 
@@ -36,12 +35,12 @@ DLCPackFriendlyNames.
 | Version | Offset | Type      | Description |
 | ------- | ------ | --------- | ----------- |
 | 20+     | 0      | DWORD     | Version (20 for base game, 21 for WoTC, 22 for Recent WoTC / TLP) |
-| 20+     | 4      | DWORD     | Header byte count, i.e. offset to start of UPK from start of file |
+| 20+     | 4      | DWORD     | Header byte count, i.e. offset to compressed chunks from the start of the file |
 | 20+     | 8      | DWORD     | Header checksum (uses the BZip2 CRC32 algorithm) |
 | 20+     | 12     | DWORD     | Uncompressed Size (may be zero) |
 | 20+     | 16     | DWORD     | Campaign Number |
 | 20+     | 20     | DWORD     | Save Slot Number |
-| 20+     | 28     | FString   | Description (Date\nTime\nPlayer Save Name\nMission Type Name\nOperation Name\nGame Date\nGame Time\sMap Name\s |
+| 20+     | 28     | FString   | Description (Date\nTime\nPlayer Save Name\nMission Type Name\nOperation Name\nGame Date\nGame Time\sMap Name\s) |
 | 20+     | -      | FString   | Save DateTime (Date\nTime) |
 | 20+     | -      | FString   | Map Command |
 | 20+     | -      | BOOL      | Tactical (0=Strategy, 1=Tactical) |
@@ -68,13 +67,87 @@ DLCPackFriendlyNames.
 | 21+     | -      | BOOL      | Post Mission |
 | 22+     | -      | BOOL      | Ladder |
 
-## UPK
+## Compressed Chunks
 
-The UPK begins with the standard four byte signature 0xC1, 0x83, 0x2A, 0x9E,
-aka the little-endian DWORD value 0x9E2A83C1.
+An unspecified number of compressed chunks of data immediately follow the header
+(if a particular header version has been read correctly and completely.)
+
+Each compressed chunks begins with the standard UPK four byte signature 0xC1,
+0x83, 0x2A, 0x9E, aka the little-endian DWORD value 0x9E2A83C1.
 
 If a particular header version has been read correctly and completely, these
 bytes should immediately follow the header.
+
+| Offset | Type              | Description             |
+| ------ | ----------------- | ----------------------- |
+| 0      | DWORD             | Signature (0x9E2A83C1)  |
+| 4      | DWORD             | Block Size              |
+| 8      | DWORD             | Total Compressed Size   |
+| 12     | DWORD             | Total Uncompressed Size |
+| 16     | CompressedBlock[] | Compressed Blocks       |
+
+The number of compressed blocks is equal to the total uncompressed size divided
+by the block size, rounding up.
+
+There tends to be only one compressed block per chunk, though the format permits
+more.
+
+## Compressed Blocks
+
+| Offset | Type    | Description       |
+| ------ | ------- | ----------------- |
+| 0      | DWORD   | Compressed Size   |
+| 4      | DWORD   | Uncompressed Size |
+| 8      | BYTE[]  | Compressed Data   |
+
+Blocks are compressed with a platform-dependent compression algorithm. On PC
+(and possibly on consoles, though this is untested), XCOM 2 uses LZO1X_1
+compression. iOS versions of XCOM: Enemy Unknown used zlib compression.
+
+## Compression Algorithm
+
+LZO1X_1 is an open source but largely undocumented compression format, read only
+by its own implementation. The current library version at time of writing, 2.10,
+is available from its author's site, http://www.oberhumer.com/opensource/lzo/.
+This is distributed as portable source code and can be built for Linux or
+Windows using common compilers. There is no precompiled binary distribution from
+the author. This library is GPL.
+
+C# ports and wrappers around this library are scarce, unmaintained, and those
+tested proved unreliable on XCOM 2 save data. It is recommended to wrap calls to
+the native LZO.DLL, once built from source, using interop and PInvoke.
+
+To compress or decompress data, the only required calls are to
+\_\_lzo\_init\_v2(1, -1, -1, -1, -1, -1, -1, -1, -1, -1) (once) and then either
+lzo1x\_decompress(src, src_len, dst, dst_len, wrkmem), or lzo1x\_compress()
+which takes the same arguments. Source and destination buffers are byte arrays,
+and lengths are the known compressed and uncompressed sizes to be/stored in each
+compressed block. The compressor requires a 64k wrkmem buffer on 32 bit
+operating systems (128k on 64-bit operating systems), and returns zero on
+success and non-zero on failure. The decompressor does not require a wrkmem
+buffer (null is acceptable) and returns the same values.
+
+Return values and 32-bit PInvoke signatures are below. For a 64-bit build,
+remove the CallingConvention parameters from the DllImport attributes.
+
+    const int LZO_E_OK = 0;
+    const int LZO_E_ERROR = -1;
+    const int LZO_E_OUT_OF_MEMORY = -2;
+    const int LZO_E_NOT_COMPRESSIBLE = -3;
+    const int LZO_E_INPUT_OVERRUN = -4;
+    const int LZO_E_OUTPUT_OVERRUN = -5;
+    const int LZO_E_LOOKBEHIND_OVERRUN = -6;
+    const int LZO_E_EOF_NOT_FOUND = -7;
+    const int LZO_E_INPUT_NOT_CONSUMED = -8;
+
+    [DllImport("lzo2.dll", CallingConvention = CallingConvention.Cdecl)]
+    static extern int __lzo_init_v2(uint v, int s1, int s2, int s3, int s4, int s5, int s6, int s7, int s8, int s9);
+
+    [DllImport("lzo2.dll", CallingConvention = CallingConvention.Cdecl)]
+    static extern int lzo1x_1_compress(byte[] src, int src_len, byte[] dst, ref int dst_len, byte[] wrkmem);
+
+    [DllImport("lzo2.dll", CallingConvention = CallingConvention.Cdecl)]
+    static extern int lzo1x_decompress(byte[] src, int src_len, byte[] dst, ref int dst_len, byte[] wrkmem);
 
 ## CRC Calculation
 

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
+using XCom2ModTool.UnrealPackages;
 
 namespace XCom2ModTool
 {
@@ -243,8 +244,9 @@ namespace XCom2ModTool
         {
             try
             {
-                var info = new PackageInfo(Path.Combine(edition.SdkXComGameCompiledScriptPath, KeyStandardPackageCompiledScriptFileName));
-                return info.IsValid ? info.Flags : (PackageFlags?)null;
+                using var reader = new PackageReader(Path.Combine(edition.SdkXComGameCompiledScriptPath, KeyStandardPackageCompiledScriptFileName));
+                var header = reader.ReadHeader();
+                return header.PackageFlags;
             }
             catch (Exception)
             {
@@ -265,8 +267,16 @@ namespace XCom2ModTool
                 }
                 else
                 {
-                    var info = new PackageInfo(filePath);
-                    Report.Verbose($"{fileName} {info}");
+                    try
+                    {
+                        using var reader = new PackageReader(filePath);
+                        var header = reader.ReadHeader();
+                        Report.Verbose($"{fileName} {header}");
+                    }
+                    catch (Exception)
+                    {
+                        Report.Verbose($"{fileName} (Invalid package)");
+                    }
                 }
             }
 

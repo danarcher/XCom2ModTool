@@ -242,13 +242,20 @@ namespace XCom2ModTool
             }
 
             var path = args[0];
-            var info = new SaveGameInfo(path);
-            var json = info.ToJson();
-            var lines = json.Split('\n');
-            foreach (var line in lines)
+            using var reader = new SaveGameReader(path);
+            var saveGame = reader.ReadToEnd();
+            var json = saveGame.ToJson();
+            using (var jsonReader = new StringReader(json))
             {
-                var text = line.Trim('\r');
-                Console.WriteLine(text);
+                while (true)
+                {
+                    var text = jsonReader.ReadLine();
+                    if (text == null)
+                    {
+                        break;
+                    }
+                    Console.WriteLine(text);
+                }
             }
         }
 
@@ -356,8 +363,28 @@ namespace XCom2ModTool
         {
             var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             var copyright = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
+
+            var vdfAssembly = Assembly.GetAssembly(typeof(Gameloop.Vdf.VdfConvert));
+            var vdfVersion = vdfAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            var vdfCopyright = vdfAssembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
+
             Console.WriteLine($"{Name} version {version}");
             Console.WriteLine(copyright);
+            Console.WriteLine("https://github.com/danarcher/xcom2modtool");
+            Console.WriteLine("Licensed under the GPL v2.0 to comply with LZO");
+            Console.WriteLine();
+
+            Console.WriteLine($"Gameloop.Vdf {vdfVersion}");
+            Console.WriteLine($"{vdfCopyright}");
+            Console.WriteLine("Licensed under the MIT License");
+            Console.WriteLine("https://github.com/shravan2x/Gameloop.Vdf");
+            Console.WriteLine();
+
+            Console.WriteLine($"LZO {Lzo.Version} {Lzo.VersionDate}");
+            Console.WriteLine("Copyright © 1996 - 2017 Markus F.X.J.Oberhumer");
+            Console.WriteLine("Licensed under the GPL v2.0");
+            Console.WriteLine("http://www.oberhumer.com/opensource/lzo/");
+
             Console.WriteLine();
             Paths();
         }
