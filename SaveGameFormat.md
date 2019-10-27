@@ -22,61 +22,62 @@ DLCPackFriendlyNames.
 
 ## Data Types
 
-| Type     | Length | Description |
-| -------- | ------ | ----------- |
-| DWORD    | 4      | An unsigned 32-bit integer |
-| BOOL     | 4      | 0 = false, 1 = true |
-| CZStr    | 1+     | A null-terminated ANSI string |
-| FString  | 5+     | A DWORD string buffer length (including the terminating null) followed by a CZStr |
-| *type*[] | 4+     | A DWORD array length followed by that number of *type*s |
+| Type      | Length | Description |
+| --------- | ------ | ----------- |
+| DWORD     | 4      | An unsigned 32-bit integer |
+| BOOL      | 4      | 0 = false, 1 = true |
+| CZStr     | 1+     | A null-terminated ANSI string |
+| FString   | 5+     | A DWORD string buffer length (including the terminating null) followed by a CZStr |
+| *type*[]  | 0+     | An array of *type*s with no length indicator |
+| *type*[n] | 4+     | A DWORD array length followed by that number of *type*s |
 
 ## Save Game Header
 
-| Version | Offset | Type      | Description |
-| ------- | ------ | --------- | ----------- |
-| 20+     | 0      | DWORD     | Version (20 for base game, 21 for WoTC, 22 for Recent WoTC / TLP) |
-| 20+     | 4      | DWORD     | Header byte count, i.e. offset to compressed chunks from the start of the file |
-| 20+     | 8      | DWORD     | Header checksum (uses the BZip2 CRC32 algorithm) |
-| 20+     | 12     | DWORD     | Uncompressed Size (may be zero) |
-| 20+     | 16     | DWORD     | Campaign Number |
-| 20+     | 20     | DWORD     | Save Slot Number |
-| 20+     | 28     | FString   | Description (Date\nTime\nPlayer Save Name\nMission Type Name\nOperation Name\nGame Date\nGame Time\sMap Name\s) |
-| 20+     | -      | FString   | Save DateTime (Date\nTime) |
-| 20+     | -      | FString   | Map Command |
-| 20+     | -      | BOOL      | Tactical (0=Strategy, 1=Tactical) |
-| 20+     | -      | BOOL      | Ironman (0=Normal, 1=Ironman)|
-| 20+     | -      | BOOL      | Autosave (0=Manual, 1=Autosave) |
-| 20+     | -      | BOOL      | Quicksave (0=Normal, 1=Quick)|
-| 20+     | -      | FString   | Language (e.g. "INT") |
-| 20+     | -      | DWORD     | Unknown6 (Negative number? Random seed?) |
-| 20+     | -      | DWORD     | Unknown7 (0) |
-| 20+     | -      | DWORD     | ArchiveFileVersion (845) |
-| 20+     | -      | DWORD     | ArchiveLicenseeVersion (e.g. 108 for base game, 120 for WoTC, ...?) |
-| 20+     | -      | FString   | Campaign Start DateTime (e.g. 2019.08.05-21.16.32.2) |
-| 20+     | -      | FString   | Mission Image URI |
-| 20+     | -      | FString   | Player Save Name (again) |
-| 20+     | -      | FString[] | DLC Pack Names |
-| 20+     | -      | FString[] | DLC Pack Friendly Names |
-| 21+     | -      | DWORD     | Mission Number (-1 for Tactical Quick Launch) |
-| 21+     | -      | DWORD     | Month |
-| 21+     | -      | DWORD     | Turn |
-| 21+     | -      | DWORD     | Action |
-| 21+     | -      | FString   | Mission Type |
-| 21+     | -      | BOOL      | Debug Save (0=Normal, 1=Debug) |
-| 21+     | -      | BOOL      | Pre Mission |
-| 21+     | -      | BOOL      | Post Mission |
-| 22+     | -      | BOOL      | Ladder |
+| Version | Offset | Type       | Description |
+| ------- | ------ | ---------  | ----------- |
+| 20+     | 0      | DWORD      | Version (20 for base game, 21 for WoTC, 22 for Recent WoTC / TLP) |
+| 20+     | 4      | DWORD      | Header byte count, i.e. offset to compressed chunks from the start of the file |
+| 20+     | 8      | DWORD      | Header checksum (uses the BZip2 CRC32 algorithm) |
+| 20+     | 12     | DWORD      | Uncompressed Size (may be zero) |
+| 20+     | 16     | DWORD      | Campaign Number |
+| 20+     | 20     | DWORD      | Save Slot Number |
+| 20+     | 28     | FString    | Description (Date\nTime\nPlayer Save Name\nMission Type Name\nOperation Name\nGame Date\nGame Time\sMap Name\s) |
+| 20+     | -      | FString    | Save DateTime (Date\nTime) |
+| 20+     | -      | FString    | Map Command |
+| 20+     | -      | BOOL       | Tactical (0=Strategy, 1=Tactical) |
+| 20+     | -      | BOOL       | Ironman (0=Normal, 1=Ironman)|
+| 20+     | -      | BOOL       | Autosave (0=Manual, 1=Autosave) |
+| 20+     | -      | BOOL       | Quicksave (0=Normal, 1=Quick)|
+| 20+     | -      | FString    | Language (e.g. "INT") |
+| 20+     | -      | DWORD      | Unknown6 (Negative number? Random seed?) |
+| 20+     | -      | DWORD      | Unknown7 (0) |
+| 20+     | -      | DWORD      | ArchiveFileVersion (845) |
+| 20+     | -      | DWORD      | ArchiveLicenseeVersion (e.g. 108 for base game, 120 for WoTC, ...?) |
+| 20+     | -      | FString    | Campaign Start DateTime (e.g. 2019.08.05-21.16.32.2) |
+| 20+     | -      | FString    | Mission Image URI |
+| 20+     | -      | FString    | Player Save Name (again) |
+| 20+     | -      | FString[n] | DLC Pack Names |
+| 20+     | -      | FString[n] | DLC Pack Friendly Names |
+| 21+     | -      | DWORD      | Mission Number (-1 for Tactical Quick Launch) |
+| 21+     | -      | DWORD      | Month |
+| 21+     | -      | DWORD      | Turn |
+| 21+     | -      | DWORD      | Action |
+| 21+     | -      | FString    | Mission Type |
+| 21+     | -      | BOOL       | Debug Save (0=Normal, 1=Debug) |
+| 21+     | -      | BOOL       | Pre Mission |
+| 21+     | -      | BOOL       | Post Mission |
+| 22+     | -      | BOOL       | Ladder |
 
 ## Compressed Chunks
 
 An unspecified number of compressed chunks of data immediately follow the header
 (if a particular header version has been read correctly and completely.)
 
-Each compressed chunks begins with the standard UPK four byte signature 0xC1,
-0x83, 0x2A, 0x9E, aka the little-endian DWORD value 0x9E2A83C1.
+One can keep reading successive compressed chunks from the file until the end
+of the file. There should be no excess data in the save file.
 
-If a particular header version has been read correctly and completely, these
-bytes should immediately follow the header.
+Each compressed chunk begins with the standard UPK four byte signature 0xC1,
+0x83, 0x2A, 0x9E, aka the little-endian DWORD value 0x9E2A83C1.
 
 | Offset | Type              | Description             |
 | ------ | ----------------- | ----------------------- |
