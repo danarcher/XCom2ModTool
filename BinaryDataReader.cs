@@ -29,7 +29,23 @@ namespace XCom2ModTool
             }
         }
 
-        public BinaryReader Reader { get; }
+        public void Detach()
+        {
+            if (!leaveOpen)
+            {
+                Reader?.Dispose();
+            }
+            Reader = null;
+        }
+
+        public void Attach(BinaryReader reader, bool leaveOpen = false)
+        {
+            Detach();
+            Reader = reader;
+            this.leaveOpen = leaveOpen;
+        }
+
+        public BinaryReader Reader { get; private set; }
 
         public bool EndOfStream => Position == Reader.BaseStream.Length;
 

@@ -31,7 +31,9 @@ namespace XCom2ModTool
         public bool AutoSave { get; set; }
         public bool QuickSave { get; set; }
         public string Language { get; set; }
+        [JsonConverter(typeof(HexJsonConverter))]
         public uint Unknown6 { get; set; }
+        [JsonConverter(typeof(HexJsonConverter))]
         public uint Unknown7 { get; set; }
         public uint ArchiveFileVersion { get; set; }
         public uint ArchiveLicenseeVersion { get; set; }
@@ -50,7 +52,13 @@ namespace XCom2ModTool
         public bool PostMission { get; set; }
         public bool Ladder { get; set; }
 
+        [JsonIgnore]
         public CompressedChunk[] Chunks { get; set; }
+
+        [JsonIgnore]
+        public byte[] AllChunksData { get; set; }
+
+        public ParsedNameTable NameTable { get; set; }
 
         public string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
 
@@ -62,6 +70,30 @@ namespace XCom2ModTool
             public string OperationName { get; set; }
             public DateTime? GameDateTime { get; set; }
             public string MapName { get; set; }
+        }
+
+        public class ParsedNameTable
+        {
+            public uint Version { get; set; }
+            public uint LicenseeVersion { get; set; }
+            public ParsedNameEntry[] Names { get; set; }
+        }
+
+        public class ParsedNameEntry
+        {
+            public string Name { get; set; }
+
+            [JsonConverter(typeof(HexJsonConverter))]
+            public uint Unknown1 { get; set; }
+
+            [JsonConverter(typeof(HexJsonConverter))]
+            public uint Unknown2 { get; set; }
+
+            [JsonConverter(typeof(HexJsonConverter))]
+            public uint Unknown3 { get; set; }
+
+            [JsonConverter(typeof(HexJsonConverter))]
+            public uint Unknown4 { get; set; }
         }
     }
 }

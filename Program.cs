@@ -244,19 +244,25 @@ namespace XCom2ModTool
             var path = args[0];
             using var reader = new SaveGameReader(path);
             var saveGame = reader.ReadToEnd();
-            var json = saveGame.ToJson();
-            using (var jsonReader = new StringReader(json))
+            using (var stream = new FileStream("Save.blocks", FileMode.Create))
             {
-                while (true)
-                {
-                    var text = jsonReader.ReadLine();
-                    if (text == null)
-                    {
-                        break;
-                    }
-                    Console.WriteLine(text);
-                }
+                stream.Write(saveGame.AllChunksData, 0, saveGame.AllChunksData.Length);
             }
+            File.WriteAllText("Save.json", saveGame.ToJson(), Encoding.UTF8);
+
+            //var json = saveGame.ToJson();
+            //using (var jsonReader = new StringReader(json))
+            //{
+            //    while (true)
+            //    {
+            //        var text = jsonReader.ReadLine();
+            //        if (text == null)
+            //        {
+            //            break;
+            //        }
+            //        Console.WriteLine(text);
+            //    }
+            //}
         }
 
         private static void Help()

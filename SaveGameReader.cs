@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using XCom2ModTool.UnrealPackages;
 
 namespace XCom2ModTool
@@ -125,6 +126,42 @@ namespace XCom2ModTool
                 chunks.Add(chunk);
             }
             save.Chunks = chunks.ToArray();
+
+            var totalSize = save.Chunks.SelectMany(x => x.Blocks).Sum(x => x.Data.Length);
+            using (var memoryStream = new MemoryStream(totalSize))
+            {
+                foreach (var chunk in save.Chunks)
+                {
+                    foreach (var block in chunk.Blocks)
+                    {
+                        memoryStream.Write(block.Data, 0, block.Data.Length);
+                    }
+                }
+                save.AllChunksData = memoryStream.ToArray();
+            }
+
+            using (var memoryStream = new MemoryStream(save.AllChunksData))
+            {
+                using (var reader = new BinaryReader(memoryStream))
+                {
+                    Attach(reader, leaveOpen: true);
+
+                    save.NameTable = new SaveGame.ParsedNameTable
+                    {
+                        Version = U32(),
+                        LicenseeVersion = U32(),
+                        Names = Array(() => new SaveGame.ParsedNameEntry
+                        {
+                            Name = FString(),
+                            Unknown1 = U32(),
+                            Unknown2 = U32(),
+                            Unknown3 = U32(),
+                            Unknown4 = U32()
+                        })
+                    };
+                    Detach();
+                }
+            }
 
             return save;
         }
