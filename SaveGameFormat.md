@@ -31,6 +31,9 @@ DLCPackFriendlyNames.
 | *type*[]  | 0+     | An array of *type*s with no length indicator |
 | *type*[n] | 4+     | A DWORD array length followed by that number of *type*s |
 
+If an FString's length is negative, then its true length is positive and its
+characters are UTF-16 rather than ANSI.
+
 ## Save Game Header
 
 | Version | Offset | Type       | Description |
