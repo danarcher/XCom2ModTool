@@ -45,6 +45,8 @@ namespace XCom2ModTool
                 cancellation.Cancel();
             };
 
+            var edition = XCom2.Base;
+
             while (args.Length > 0)
             {
                 switch (args[0])
@@ -75,6 +77,13 @@ namespace XCom2ModTool
                         Options.Debug = true;
                         args = args.Skip(1).ToArray();
                         break;
+                    case "--wotc":
+                    case "/wotc":
+                    case "-w":
+                    case "/w":
+                        edition = XCom2.Wotc;
+                        args = args.Skip(1).ToArray();
+                        break;
                     case "create":
                         Create(args.Skip(1).ToArray());
                         return;
@@ -82,13 +91,19 @@ namespace XCom2ModTool
                         Rename(args.Skip(1).ToArray());
                         return;
                     case "build":
-                        Build(args.Skip(1).ToArray(), cancellation.Token);
+                        Build(args.Skip(1).ToArray(), edition, cancellation.Token);
                         return;
                     case "open":
-                        Open(args.Skip(1).ToArray());
+                        Open(args.Skip(1).ToArray(), edition);
+                        return;
+                    case "clip":
+                        Clip(args.Skip(1).ToArray(), edition);
                         return;
                     case "update-project":
-                        UpdateProject(args.Skip(1).ToArray());
+                        UpdateProject(args.Skip(1).ToArray(), edition);
+                        return;
+                    case "new-guid":
+                        NewGuid(args.Skip(1).ToArray(), edition);
                         return;
                     case "save-info":
                         SaveInfo(args.Skip(1).ToArray());
@@ -125,11 +140,11 @@ namespace XCom2ModTool
             ModRenamer.Rename(args[0], args[1]);
         }
 
-        private static void Build(string[] args, CancellationToken cancellation)
+        private static void Build(string[] args, XCom2Edition edition, CancellationToken cancellation)
         {
             if (args.Length > 0 && args[0] == "clean")
             {
-                BuildClean(args.Skip(1).ToArray(), cancellation);
+                BuildClean(args.Skip(1).ToArray(), edition, cancellation);
                 return;
             }
 
@@ -155,81 +170,73 @@ namespace XCom2ModTool
                 args = args.Skip(1).ToArray();
             }
 
-            ModInfo modInfo = null;
-            if (!ModInfo.FindModForCurrentDirectory(out modInfo) && args.Length != 1)
+            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
             {
                 HelpBuild();
                 return;
             }
-            else if (modInfo == null)
-            {
-                modInfo = new ModInfo(args[0]);
-            }
-            else
-            {
-                Report.Verbose($"[{modInfo.RootPath}]");
-            }
 
-            var builder = new ModBuilder(XCom2.Base, modInfo, cancellation);
+            var builder = new ModBuilder(modInfo, edition, cancellation);
             builder.Build(buildType);
         }
 
-        private static void BuildClean(string[] args, CancellationToken cancellation)
+        private static void BuildClean(string[] args, XCom2Edition edition, CancellationToken cancellation)
         {
-            if (args.Length != 1)
+            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
             {
                 HelpBuild();
                 return;
             }
 
-            var builder = new ModBuilder(XCom2.Base, new ModInfo(args[0]), cancellation);
+            var builder = new ModBuilder(modInfo, edition, cancellation);
             builder.Clean();
         }
 
-        private static void Open(string[] args)
+        private static void Open(string[] args, XCom2Edition edition)
         {
-            var copy = false;
-            if (args.Length > 0 && args[0] == "copy")
-            {
-                copy = true;
-                args = args.Skip(1).ToArray();
-            }
-
             if (args.Length != 1)
             {
-                HelpOpen();
+                HelpOpen(edition);
                 return;
             }
 
-            if (copy)
-            {
-                XCom2Browser.CopyToClipboard(args[0]);
-            }
-            else
-            {
-                XCom2Browser.Browse(args[0]);
-            }
+            XCom2Browser.Browse(args[0], edition);
         }
 
-        private static void UpdateProject(string[] args)
+        private static void Clip(string[] args, XCom2Edition edition)
         {
-            ModInfo modInfo = null;
-            if (!ModInfo.FindModForCurrentDirectory(out modInfo) && args.Length != 1)
+            if (args.Length != 1)
+            {
+                HelpClip(edition);
+                return;
+            }
+
+            XCom2Browser.CopyToClipboard(args[0], edition);
+        }
+
+        private static void UpdateProject(string[] args, XCom2Edition edition)
+        {
+            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
             {
                 HelpUpdateProject();
                 return;
             }
-            else if (modInfo == null)
+
+            var project = ModProject.Load(modInfo, edition);
+            project.Update();
+            project.Save(modInfo.ProjectPath);
+        }
+
+        private static void NewGuid(string[] args, XCom2Edition edition)
+        {
+            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
             {
-                modInfo = new ModInfo(args[0]);
-            }
-            else
-            {
-                Report.Verbose($"[{modInfo.RootPath}]");
+                HelpNewGuid();
+                return;
             }
 
-            var project = ModProject.Load(modInfo);
-            project.Update();
+            var project = ModProject.Load(modInfo, edition);
+            project.Id = Guid.NewGuid();
             project.Save(modInfo.ProjectPath);
         }
 
@@ -268,7 +275,7 @@ namespace XCom2ModTool
         private static void Help()
         {
             var indent = new string(' ', Name.Length);
-            Console.WriteLine($"usage: {Name} [--version ] [ -h | --help ] [ -v | --verbose ]");
+            Console.WriteLine($"usage: {Name} [--version ] [ -h | --help ] [-w | --wotc] [ -v | --verbose ]");
             Console.WriteLine($"       {indent} [options]");
             Console.WriteLine($"       {indent} <command> [<args>]");
             Console.WriteLine();
@@ -279,7 +286,9 @@ namespace XCom2ModTool
             Console.WriteLine("  rename         Rename a mod");
             Console.WriteLine("  build          Build a mod");
             Console.WriteLine("  open           Open a specific XCOM folder");
-            Console.WriteLine($"  update-project Update a mod's project file");
+            Console.WriteLine("  clip           Copy a specific XCOM folder to the clipboard");
+            Console.WriteLine("  update-project Update a mod's project file");
+            Console.WriteLine("  new-guid       Generate a new GUID for a mod");
             Console.WriteLine("  save-info  Display info on a save file");
             Console.WriteLine();
             Paths();
@@ -318,34 +327,54 @@ namespace XCom2ModTool
             Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
         }
 
+        private static void HelpNewGuid()
+        {
+            Console.WriteLine("To generate a new GUID for a mod project:");
+            Console.WriteLine($"{Name} new-guid [<folder>]");
+            Console.WriteLine();
+            Console.WriteLine("This updates the project with a new GUID for the mod.");
+            Console.WriteLine();
+            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+        }
+
         private static void HelpSaveInfo()
         {
             Console.WriteLine("To display info on a save file:");
             Console.WriteLine($"{Name} save-info <file>");
         }
 
-        private static void HelpOpen()
+        private static void HelpOpen(XCom2Edition edition)
         {
             Console.WriteLine("To open a specific XCOM 2 folder or program:");
             Console.WriteLine($"{Name} open <name>");
             Console.WriteLine();
+            ListFolders(edition, "open");
+        }
+
+        private static void HelpClip(XCom2Edition edition)
+        {
             Console.WriteLine("To copy a specific XCOM 2 path to the clipboard:");
-            Console.WriteLine($"{Name} open copy <name>");
+            Console.WriteLine($"{Name} clip <name>");
             Console.WriteLine();
+            ListFolders(edition, "clip");
+        }
+
+        private static void ListFolders(XCom2Edition edition, string command)
+        {
             Console.WriteLine("Names:");
-            var folders = XCom2Browser.GetPaths();
+            var folders = XCom2Browser.GetFolders();
             var length = folders.Max(x => x.name.Length) + 2;
             foreach (var folder in folders)
             {
                 var indent = new string(' ', length - folder.name.Length);
-                Console.WriteLine($"  {folder.name}{indent}{folder.description}");
+                Console.WriteLine($"  {folder.name}{indent}{folder.describe(edition)}");
                 if (Report.IsVerbose)
                 {
                     indent = new string(' ', length);
                     string path;
                     try
                     {
-                        path = folder.getPath();
+                        path = folder.getPath(edition);
                     }
                     catch (Exception ex)
                     {
@@ -361,8 +390,26 @@ namespace XCom2ModTool
             if (!Report.IsVerbose)
             {
                 Console.WriteLine();
-                Console.WriteLine($"Use '{Name} --verbose open' to see folder paths.");
+                Console.WriteLine($"Use '{Name} --verbose {command}' to see folder paths.");
             }
+        }
+
+        private static bool LocateMod(ref string[] args, out ModInfo modInfo)
+        {
+            if (!ModInfo.FindModForCurrentDirectory(out modInfo))
+            {
+                if (args.Length < 1)
+                {
+                    return false;
+                }
+                modInfo = new ModInfo(args[0]);
+                args = args.Skip(1).ToArray();
+            }
+            else
+            {
+                Report.Verbose($"[{modInfo.RootPath}]");
+            }
+            return true;
         }
 
         private static void Version()
@@ -397,10 +444,11 @@ namespace XCom2ModTool
 
         private static void Paths()
         {
-            Console.WriteLine($"{XCom2.Base.DisplayName} is {(XCom2.Base.IsInstalled ? XCom2.Base.Path : "not found")}");
-            Console.WriteLine($"{XCom2.Wotc.DisplayName} is {(XCom2.Wotc.IsInstalled ? XCom2.Wotc.Path : "not found")}");
-            Console.WriteLine($"{XCom2.Base.SdkDisplayName} is {(XCom2.Base.IsSdkInstalled ? XCom2.Base.SdkPath : "not found")}");
-            Console.WriteLine($"{XCom2.Wotc.SdkDisplayName} is {(XCom2.Wotc.IsSdkInstalled ? XCom2.Wotc.SdkPath : "not found")}");
+            foreach (var edition in new[] { XCom2.Base, XCom2.Wotc })
+            {
+                Console.WriteLine($"{edition.DisplayName} is {(edition.IsInstalled ? edition.Path : "not found")}");
+                Console.WriteLine($"{edition.SdkDisplayName} is {(edition.IsSdkInstalled ? edition.SdkPath : "not found")}");
+            }
         }
     }
 }

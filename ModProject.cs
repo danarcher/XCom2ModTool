@@ -35,7 +35,7 @@ namespace XCom2ModTool
         {
         }
 
-        public static ModProject Load(ModInfo modInfo)
+        public static ModProject Load(ModInfo modInfo, XCom2Edition edition)
         {
             if (PathHelper.IsRelative(modInfo.ProjectPath))
             {
@@ -61,6 +61,7 @@ namespace XCom2ModTool
             var project = new ModProject
             {
                 ModInfo = modInfo,
+                Edition = edition,
                 Id = Guid.Parse(properties.GetElementByLocalName(XmlGuid).Value),
                 Title = properties.GetElementByLocalName(XmlTitle).Value,
                 Description = properties.GetElementByLocalName(XmlDescription).Value,
@@ -75,6 +76,7 @@ namespace XCom2ModTool
         }
 
         public ModInfo ModInfo { get; private set; }
+        public XCom2Edition Edition { get; set; }
         public Guid Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }

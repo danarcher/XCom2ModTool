@@ -58,10 +58,10 @@ namespace XCom2ModTool
         private string modSdkCompiledScriptPath = null;
         private string modStagingCompiledScriptFilePath = null;
 
-        public ModBuilder(XCom2Edition edition, ModInfo modInfo, CancellationToken cancellation)
+        public ModBuilder(ModInfo modInfo, XCom2Edition edition, CancellationToken cancellation)
         {
-            this.edition = edition;
             this.modInfo = modInfo;
+            this.edition = edition;
             this.cancellation = cancellation;
             compiler = new Compiler(edition);
             modStagingPath = edition.GetModStagingPath(modInfo);
@@ -87,7 +87,7 @@ namespace XCom2ModTool
 
             // Load project first, to check folder structure is as we expect before we start moving files.
             Report.Verbose("Loading project");
-            modProject = ModProject.Load(modInfo);
+            modProject = ModProject.Load(modInfo, edition);
 
             if (!string.Equals(modProject.Title, modInfo.ModName, StringComparison.Ordinal))
             {

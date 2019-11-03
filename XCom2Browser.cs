@@ -8,62 +8,54 @@ namespace XCom2ModTool
     internal class XCom2Browser
     {
         private static readonly string EditorName = "editor";
-        private static readonly string WotcEditorName = "wotc-editor";
         private static readonly string[] EditorArguments = new[] { "editor", "-noscriptcompile", "-nogadwarning" };
 
-        public static (string name, string description, Func<string> getPath, string[] arguments)[] GetPaths()
+        public static (string name, Func<XCom2Edition, string> describe, Func<XCom2Edition, string> getPath, string[] arguments)[] GetFolders()
         {
-            return new (string, string, Func<string>, string[])[]
+            return new (string, Func<XCom2Edition, string>, Func<XCom2Edition, string>, string[])[]
             {
-                ("xcom2", $"The {XCom2.Base.DisplayName} folder", () => XCom2.Base.Path, null),
-                ("mods", $"The {XCom2.Base.DisplayName} mods folder", () => XCom2.Base.ModsPath, null),
-                ("sdk", $"The {XCom2.Base.SdkDisplayName} folder", () => XCom2.Base.SdkPath, null),
-                ("sdk-mods", $"The {XCom2.Base.SdkDisplayName} mods folder", () => XCom2.Base.SdkModsPath, null),
-                ("config", $"The current user's {XCom2.Base.DisplayName} config folder", () => XCom2.Base.UserConfigPath, null),
-                ("log", $"The current user's {XCom2.Base.DisplayName} log file", () => XCom2.Base.UserLogPath, null),
-                (EditorName, $"The {XCom2.Base.DisplayName} Editor", () => XCom2.Base.EditorPath, EditorArguments),
-                ("wotc", $"The {XCom2.Wotc.DisplayName} folder", () => XCom2.Wotc.Path, null),
-                ("wotc-mods", $"The {XCom2.Wotc.DisplayName} mods folder", () => XCom2.Wotc.ModsPath, null),
-                ("wotc-sdk", $"The {XCom2.Wotc.SdkDisplayName} folder", () => XCom2.Wotc.SdkPath, null),
-                ("wotc-sdk-mods", $"The {XCom2.Wotc.SdkDisplayName} mods folder", () => XCom2.Wotc.SdkModsPath, null),
-                (WotcEditorName, $"The {XCom2.Wotc.DisplayName} Editor", () => XCom2.Wotc.EditorPath, EditorArguments),
+                ("xcom2", x => $"The {x.DisplayName} folder", x => x.Path, null),
+                ("mods", x => $"The {x.DisplayName} mods folder", x => x.ModsPath, null),
+                ("sdk", x => $"The {x.SdkDisplayName} folder", x => x.SdkPath, null),
+                ("sdk-mods", x => $"The {x.SdkDisplayName} mods folder", x => x.SdkModsPath, null),
+                ("config", x => $"The current user's {x.DisplayName} config folder", x => x.UserConfigPath, null),
+                ("log", x => $"The current user's {x.DisplayName} log file", x => x.UserLogPath, null),
+                ("save", x => $"The current user's {x.DisplayName} save folder", x => x.UserSavePath, null),
+                ("int", x => $"The {x.DisplayName} INT localization folder", x => x.IntPath, null),
+                (EditorName, x => $"The {x.DisplayName} Editor", x => x.EditorPath, EditorArguments),
             };
         }
 
-        public static void Browse(string name)
+        public static void Browse(string name, XCom2Edition edition)
         {
-            var path = GetPaths().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
-            PrepareToBrowse(path);
-            if (path.arguments?.Length > 0)
+            var folder = GetFolders().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
+            PrepareToBrowse(folder.name, edition);
+            var path = folder.getPath(edition);
+            if (folder.arguments?.Length > 0)
             {
-                Report.Verbose($"> \"{path.getPath()}\" {PathHelper.EscapeAndJoinArguments(path.arguments)}");
-                Process.Start(path.getPath(), PathHelper.EscapeAndJoinArguments(path.arguments));
+                Report.Verbose($"> \"{path}\" {PathHelper.EscapeAndJoinArguments(folder.arguments)}");
+                Process.Start(path, PathHelper.EscapeAndJoinArguments(folder.arguments));
             }
             else
             {
-                Report.Verbose($"> \"{path.getPath()}\"");
-                Process.Start(path.getPath());
+                Report.Verbose($"> \"{path}\"");
+                Process.Start(path);
             }
         }
 
-        private static void PrepareToBrowse((string name, string description, Func<string> getPath, string[] arguments) path)
+        private static void PrepareToBrowse(string name, XCom2Edition edition)
         {
-            if (path.name == EditorName)
+            if (name == EditorName)
             {
-                Report.Verbose($"Deleting {XCom2.Base.SdkDisplayName} mods");
-                DirectoryHelper.DeleteDirectoryContents(XCom2.Base.SdkModsPath);
-            }
-            else if (path.name == WotcEditorName)
-            {
-                Report.Verbose($"Deleting {XCom2.Wotc.SdkDisplayName} mods");
-                DirectoryHelper.DeleteDirectoryContents(XCom2.Wotc.SdkModsPath);
+                Report.Verbose($"Deleting {edition.SdkDisplayName} mods");
+                DirectoryHelper.DeleteDirectoryContents(edition.SdkModsPath);
             }
         }
 
-        public static void CopyToClipboard(string name)
+        public static void CopyToClipboard(string name, XCom2Edition edition)
         {
-            var folder = GetPaths().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
-            Clipboard.SetText(folder.getPath());
+            var folder = GetFolders().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
+            Clipboard.SetText(folder.getPath(edition));
         }
     }
 }

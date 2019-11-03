@@ -7,6 +7,8 @@ namespace XCom2ModTool
     {
         private static readonly string XComGameFolderName = "XComGame";
         private static readonly string ModsFolderName = "Mods";
+        private static readonly string LocalizationFolderName = "Localization";
+        private static readonly string IntFolderName = "INT";
         private static readonly string SdkDevelopmentFolderName = "Development";
         private static readonly string SdkSourceCodeFolderName = "Src";
         private static readonly string SdkOriginalSourceCodeFolderName = "SrcOrig";
@@ -15,16 +17,21 @@ namespace XCom2ModTool
         private static readonly string SdkWin64FolderName = "win64";
         private static readonly string SdkCompilerName = "XComGame.com";
         private static readonly string SdkEditorName = "XComGame.exe";
+        private static readonly string MyGamesFolderName = "My Games";
         private static readonly string ConfigFolderName = "Config";
-        private static readonly string UserConfigPathInDocuments = System.IO.Path.Combine("My Games", "XCOM2", XComGameFolderName, ConfigFolderName);
-        private static readonly string LogPathInDocuments = System.IO.Path.Combine("My Games", "XCOM2", XComGameFolderName, "Logs", "Launch.log");
+        private static readonly string LogsFolderName = "Logs";
+        private static readonly string SaveFolderName = "SaveData";
+        private static readonly string LogFileName = "Launch.log";
 
         private string path;
         private string sdkPath;
+        private string userGameFolderName;
 
-        public XCom2Edition(string displayName, string steamAppName, string subFolderName, string sdkSteamAppName)
+        public XCom2Edition(string displayName, string steamAppName, string subFolderName, string sdkSteamAppName, string userGameFolderName, bool isExpansion = false)
         {
             DisplayName = displayName;
+            IsExpansion = isExpansion;
+            this.userGameFolderName = userGameFolderName;
 
             if (Steam.TryFindApp(steamAppName, out string path))
             {
@@ -53,30 +60,37 @@ namespace XCom2ModTool
 
         public string DisplayName { get; }
         public string SdkDisplayName => $"{DisplayName} SDK";
+        public bool IsExpansion { get; }
 
         public string Path => ConditionalPath(IsInstalled, path, DisplayName);
 
         public string SdkPath => ConditionalPath(IsSdkInstalled, sdkPath, SdkDisplayName);
 
-        public string XComGamePath => System.IO.Path.Combine(Path, XComGameFolderName);
+        public string XComGamePath => Combine(Path, XComGameFolderName);
 
-        public string SdkXComGamePath => System.IO.Path.Combine(SdkPath, XComGameFolderName);
+        public string IntPath => Combine(XComGamePath, LocalizationFolderName, IntFolderName);
 
-        public string ModsPath => System.IO.Path.Combine(XComGamePath, ModsFolderName);
+        public string SdkXComGamePath => Combine(SdkPath, XComGameFolderName);
 
-        public string SdkModsPath => System.IO.Path.Combine(SdkXComGamePath, ModsFolderName);
+        public string ModsPath => Combine(XComGamePath, ModsFolderName);
 
-        public string SdkSourceCodePath => System.IO.Path.Combine(SdkPath, SdkDevelopmentFolderName, SdkSourceCodeFolderName);
+        public string SdkModsPath => Combine(SdkXComGamePath, ModsFolderName);
 
-        public string SdkOriginalSourceCodePath => System.IO.Path.Combine(SdkPath, SdkDevelopmentFolderName, SdkOriginalSourceCodeFolderName);
+        public string SdkSourceCodePath => Combine(SdkPath, SdkDevelopmentFolderName, SdkSourceCodeFolderName);
 
-        public string SdkXComGameCompiledScriptPath => System.IO.Path.Combine(SdkXComGamePath, SdkScriptFolderName);
+        public string SdkOriginalSourceCodePath => Combine(SdkPath, SdkDevelopmentFolderName, SdkOriginalSourceCodeFolderName);
 
-        public string SdkCompilerPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkCompilerName);
+        public string SdkXComGameCompiledScriptPath => Combine(SdkXComGamePath, SdkScriptFolderName);
 
-        public string UserConfigPath => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), UserConfigPathInDocuments);
+        public string SdkCompilerPath => Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkCompilerName);
 
-        public string UserLogPath => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), LogPathInDocuments);
+        public string UserPath => Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), MyGamesFolderName, userGameFolderName, XComGameFolderName);
+
+        public string UserConfigPath => Combine(UserPath, ConfigFolderName);
+
+        public string UserLogPath => Combine(UserPath, LogsFolderName, LogFileName);
+
+        public string UserSavePath => Combine(UserPath, SaveFolderName);
 
         public string EditorPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkEditorName);
 
@@ -89,6 +103,8 @@ namespace XCom2ModTool
         {
             return System.IO.Path.Combine(ModsPath, modInfo.RootFolder);
         }
+
+        private string Combine(params string[] paths) => System.IO.Path.Combine(paths);
 
         private string ConditionalPath(bool condition, string value, string displayName)
         {

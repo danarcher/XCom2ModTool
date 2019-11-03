@@ -11,11 +11,13 @@ namespace XCom2ModTool
             Title = project.Title;
             Description = project.Description;
             SteamPublishId = project.SteamPublishId;
+            RequiresExpansion = project.Edition.IsExpansion;
         }
 
         public string Title { get; set; }
         public string Description { get; set; }
         public ulong SteamPublishId { get; set; }
+        public bool RequiresExpansion { get; set; }
 
         public void Save(string path)
         {
@@ -25,7 +27,10 @@ namespace XCom2ModTool
                 writer.WriteLine($"publishedFileId={SteamPublishId}");
                 writer.WriteLine($"Title={Title}");
                 writer.WriteLine($"Description={Description}");
-                // TODO: RequiresXPACK=true
+                if (RequiresExpansion)
+                {
+                    writer.WriteLine("RequiresXPACK=true");
+                }
             }
         }
 
