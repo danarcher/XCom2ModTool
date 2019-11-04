@@ -58,6 +58,7 @@ namespace XCom2ModTool
         [JsonIgnore]
         public byte[] AllChunksData { get; set; }
 
+        [JsonIgnore]
         public ParsedNameTable NameTable { get; set; }
 
         public string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);

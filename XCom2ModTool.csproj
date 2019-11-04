@@ -85,7 +85,6 @@
     <Compile Include="UnrealPackages\PackageFlags.cs" />
     <Compile Include="UnrealPackages\CompressedChunk.cs" />
     <Compile Include="UnrealPackages\PackageSignature.cs" />
-    <Compile Include="UnrealPackages\ScriptObjects\ScriptObjects.cs" />
     <Compile Include="XCom2.cs" />
     <Compile Include="XCom2Browser.cs" />
     <Compile Include="XCom2Edition.cs" />
