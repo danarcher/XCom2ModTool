@@ -58,7 +58,7 @@ namespace XCom2ModTool
                     case "/help":
                     case "/h":
                     case "/?":
-                        Help();
+                        Help(args.Skip(1).ToArray(), edition);
                         return;
                     case "version":
                     case "--version":
@@ -200,7 +200,15 @@ namespace XCom2ModTool
                 return;
             }
 
-            XCom2Browser.Browse(args[0], edition);
+            var folder = args[0];
+            try
+            {
+                XCom2Browser.Browse(folder, edition);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                throw new InvalidOperationException($"'{folder}' is not a recognized folder. See '{Name} help open'.");
+            }
         }
 
         private static void Clip(string[] args, XCom2Edition edition)
@@ -211,7 +219,15 @@ namespace XCom2ModTool
                 return;
             }
 
-            XCom2Browser.CopyToClipboard(args[0], edition);
+            var folder = args[0];
+            try
+            {
+                XCom2Browser.CopyToClipboard(folder, edition);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                throw new InvalidOperationException($"'{folder}' is not a recognized folder. See '{Name} help clip'.");
+            }
         }
 
         private static void UpdateProject(string[] args, XCom2Edition edition)
@@ -270,13 +286,16 @@ namespace XCom2ModTool
         private static void Help()
         {
             var indent = new string(' ', Name.Length);
-            Console.WriteLine($"usage: {Name} [--version ] [ -h | --help ] [-w | --wotc] [ -v | --verbose ]");
+            Console.WriteLine($"usage: {Name} [--version ] [-w | --wotc] [ -v | --verbose ]");
             Console.WriteLine($"       {indent} [options]");
             Console.WriteLine($"       {indent} <command> [<args>]");
             Console.WriteLine();
-            Console.WriteLine("Options vary by command.");
+            Console.WriteLine($"Options vary by command; see '{Name} help <command>'.");
+            Console.WriteLine();
+            Console.WriteLine($"Specify -w or --wotc for {XCom2.Wotc.DisplayName}.");
             Console.WriteLine();
             Console.WriteLine("Commands:");
+            Console.WriteLine("  help           Display help on a command");
             Console.WriteLine("  create         Create a mod");
             Console.WriteLine("  rename         Rename a mod");
             Console.WriteLine("  build          Build a mod");
@@ -287,6 +306,25 @@ namespace XCom2ModTool
             Console.WriteLine("  save-info  Display info on a save file");
             Console.WriteLine();
             Paths();
+        }
+
+        private static void Help(string[] args, XCom2Edition edition)
+        {
+            var command = args.Length > 0 ? args[0] : string.Empty;
+            var help = command switch
+            {
+                "create" => HelpCreate,
+                "rename" => HelpRename,
+                "build" => HelpBuild,
+                "open" => () => HelpOpen(edition),
+                "clip" => () => HelpClip(edition),
+                "update-project" => HelpUpdateProject,
+                "new-guid" => HelpNewGuid,
+                "save-info" => HelpSaveInfo,
+                _ => (Action)Help,
+            };
+            help();
+            return;
         }
 
         private static void HelpCreate()

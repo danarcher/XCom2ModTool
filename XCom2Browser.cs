@@ -29,6 +29,10 @@ namespace XCom2ModTool
         public static void Browse(string name, XCom2Edition edition)
         {
             var folder = GetFolders().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
+            if (folder.name == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(name));
+            }
             PrepareToBrowse(folder.name, edition);
             var path = folder.getPath(edition);
             if (folder.arguments?.Length > 0)
@@ -55,6 +59,10 @@ namespace XCom2ModTool
         public static void CopyToClipboard(string name, XCom2Edition edition)
         {
             var folder = GetFolders().FirstOrDefault(x => string.Equals(name, x.name, StringComparison.OrdinalIgnoreCase));
+            if (folder.name == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(name));
+            }
             Clipboard.SetText(folder.getPath(edition));
         }
     }
