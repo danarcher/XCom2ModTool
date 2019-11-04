@@ -24,35 +24,6 @@ namespace XCom2ModTool.UnrealPackages
             header.PackageGroup = FString();
             header.PackageFlags = (PackageFlags)U32();
 
-            //NameCount = U32();
-            //NameTableOffset = U32();
-            //ExportCount = U32();
-            //ExportTableOffset = U32();
-            //ImportCount = U32();
-            //ImportTableOffset = U32();
-            //DependsOffset = U32();
-            //SerializedOffset = U32();
-            //Unknown2 = U32();
-            //Unknown3 = U32();
-            //Unknown4 = U32();
-            //PackageGuid = FGuid();
-            //Generations = Array(() => new GenerationInfo
-            //{
-            //    ExportCount = U32(),
-            //    NameCount = U32(),
-            //    NetObjectCount = U32()
-            //});
-            //EngineVersion = U32();
-            //CookerVersion = U32();
-            //CompressionFlags = U32();
-            //CompressedChunks = Array(() => new CompressedChunk
-            //{
-            //    UncompressedOffset = U32(),
-            //    UncompressedSize = U32(),
-            //    CompressedOffset = U32(),
-            //    CompressedSize = U32()
-            //});
-
             return header;
         }
 
