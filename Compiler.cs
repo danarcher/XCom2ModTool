@@ -91,7 +91,8 @@ namespace XCom2ModTool
                 text.Contains("Package processing complete") ||
                 (text.Contains(" = ") && text.Contains(" min")) ||
                 text.Contains("NumFullyLoadedPackages") ||
-                text.Contains("NumFastPackages"))
+                text.Contains("NumFastPackages") ||
+                text.Contains("Warning, INI file contains an incorrect case"))
             {
                 // None of these lines are interesting.
                 return;
@@ -144,7 +145,25 @@ namespace XCom2ModTool
                     }
                 }
             }
+
+            var previousColor = Console.ForegroundColor;
+
+            if (text.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0 && !text.Contains("0 errors"))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+            }
+            else if (text.IndexOf("warning", StringComparison.InvariantCultureIgnoreCase) >= 0 && !text.Contains("0 warnings"))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+
             writer.WriteLine(text);
+
+            Console.ForegroundColor = previousColor;
         }
     }
 }
