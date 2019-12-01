@@ -73,7 +73,13 @@
     <Compile Include="Lzo.cs" />
     <Compile Include="SaveGameReader.cs" />
     <Compile Include="UnrealPackages\CompressedBlock.cs" />
+    <Compile Include="UnrealPackages\GlobalName.cs" />
+    <Compile Include="UnrealPackages\ObjectReference.cs" />
+    <Compile Include="UnrealPackages\ObjectReferenceJsonConverter.cs" />
+    <Compile Include="UnrealPackages\PackageExport.cs" />
     <Compile Include="UnrealPackages\PackageHeader.cs" />
+    <Compile Include="UnrealPackages\PackageImport.cs" />
+    <Compile Include="StringJsonConverter.cs" />
     <Compile Include="UnrealPackages\PackageReader.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Program.cs" />
@@ -85,6 +91,7 @@
     <Compile Include="UnrealPackages\PackageFlags.cs" />
     <Compile Include="UnrealPackages\CompressedChunk.cs" />
     <Compile Include="UnrealPackages\PackageSignature.cs" />
+    <Compile Include="UnrealPackages\PackageReferenceable.cs" />
     <Compile Include="XCom2.cs" />
     <Compile Include="XCom2Browser.cs" />
     <Compile Include="XCom2Edition.cs" />

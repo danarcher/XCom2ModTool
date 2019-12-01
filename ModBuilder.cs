@@ -272,19 +272,6 @@ namespace XCom2ModTool
                     Report.Verbose($"  Deleting non-standard compiled script file {fileName}");
                     DirectoryHelper.Delete(filePath);
                 }
-                else
-                {
-                    try
-                    {
-                        using var reader = new PackageReader(filePath);
-                        var header = reader.ReadHeader();
-                        Report.Verbose($"{fileName} {header}");
-                    }
-                    catch (Exception)
-                    {
-                        Report.Verbose($"{fileName} (Invalid package)");
-                    }
-                }
             }
 
             Report.Verbose("Smart-cleaning compiled script manifest");

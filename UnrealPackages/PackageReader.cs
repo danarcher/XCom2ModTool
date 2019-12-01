@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace XCom2ModTool.UnrealPackages
@@ -23,6 +24,73 @@ namespace XCom2ModTool.UnrealPackages
             header.HeaderSize = U32();
             header.PackageGroup = FString();
             header.PackageFlags = (PackageFlags)U32();
+
+            var nameCount = U32();
+            var nameOffset = U32();
+            using (Detour(nameOffset))
+            {
+                var names = new List<GlobalName>();
+                for (var i = 0; i < nameCount; ++i)
+                {
+                    var name = FString();
+                    var flags = U64();
+                    names.Add(new GlobalName { Name = name, Flags = flags });
+                }
+                header.Names = names.ToArray();
+            }
+
+            var exportCount = U32();
+            var exportOffset = U32();
+            using (Detour(exportOffset))
+            {
+                header.Exports = Array(exportCount, () =>
+                {
+                    return new PackageExport
+                    {
+                        Type = Ref(),
+                        ParentClass = Ref(),
+                        Owner = Ref(),
+                        Name = Name(header.Names),
+                        Archetype = Ref(),
+                        ObjectFlags = U64HL(),
+                        SerializedDataSize = U32(),
+                        SerializedDataOffset = U32(),
+                        ExportFlags = U32(),
+                        NetObjectCount = Push(U32()),
+                        Guid = FGuid(),
+                        Unknown = U32(),
+                        NetUnknown = Array(Pop(), () => U32())
+                    };
+                });
+            }
+
+            var importCount = U32();
+            var importOffset = U32();
+            using (Detour(importOffset))
+            {
+                header.Imports = Array(importCount, () =>
+                {
+                    return new PackageImport
+                    {
+                        PackageName = Name(header.Names),
+                        TypeName = Name(header.Names),
+                        Owner = Ref(),
+                        Name = Name(header.Names),
+                    };
+                });
+            }
+
+            foreach (var objRef in Refs())
+            {
+                if (objRef.Raw > 0)
+                {
+                    objRef.To = header.Exports[objRef.Raw - 1];
+                }
+                else if (objRef.Raw < 0)
+                {
+                    objRef.To = header.Imports[(-objRef.Raw) - 1];
+                }
+            }
 
             return header;
         }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using XCom2ModTool.UnrealPackages;
 
 namespace XCom2ModTool
 {
@@ -104,6 +105,9 @@ namespace XCom2ModTool
                         return;
                     case "new-guid":
                         NewGuid(args.Skip(1).ToArray(), edition);
+                        return;
+                    case "package-info":
+                        PackageInfo(args.Skip(1).ToArray());
                         return;
                     case "save-info":
                         SaveInfo(args.Skip(1).ToArray());
@@ -256,6 +260,33 @@ namespace XCom2ModTool
             project.Save(modInfo.ProjectPath);
         }
 
+        private static void PackageInfo(string[] args)
+        {
+            if (args.Length != 1)
+            {
+                HelpPackageInfo();
+                return;
+            }
+
+            var path = args[0];
+            using var reader = new PackageReader(path);
+            var header = reader.ReadHeader();
+
+            var json = header.ToJson();
+            using (var jsonReader = new StringReader(json))
+            {
+                while (true)
+                {
+                    var text = jsonReader.ReadLine();
+                    if (text == null)
+                    {
+                        break;
+                    }
+                    Console.WriteLine(text);
+                }
+            }
+        }
+
         private static void SaveInfo(string[] args)
         {
             if (args.Length != 1)
@@ -303,6 +334,7 @@ namespace XCom2ModTool
             Console.WriteLine("  clip           Copy a specific XCOM folder to the clipboard");
             Console.WriteLine("  update-project Update a mod's project file");
             Console.WriteLine("  new-guid       Generate a new GUID for a mod");
+            Console.WriteLine("  package-info   Display info on an Unreal package");
             Console.WriteLine("  save-info  Display info on a save file");
             Console.WriteLine();
             Paths();
@@ -320,6 +352,7 @@ namespace XCom2ModTool
                 "clip" => () => HelpClip(edition),
                 "update-project" => HelpUpdateProject,
                 "new-guid" => HelpNewGuid,
+                "package-info" => HelpPackageInfo,
                 "save-info" => HelpSaveInfo,
                 _ => (Action)Help,
             };
@@ -368,6 +401,12 @@ namespace XCom2ModTool
             Console.WriteLine("This updates the project with a new GUID for the mod.");
             Console.WriteLine();
             Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+        }
+
+        private static void HelpPackageInfo()
+        {
+            Console.WriteLine("To display info on an Unreal package:");
+            Console.WriteLine($"{Name} package-info <file>");
         }
 
         private static void HelpSaveInfo()
