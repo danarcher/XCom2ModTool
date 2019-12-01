@@ -97,6 +97,7 @@ namespace XCom2ModTool
             CleanModStaging();
             ThrowIfCancelled();
 
+            CleanSdkMods();
             Directory.CreateDirectory(modStagingPath);
             StageModFolder(ModInfo.SourceCodeFolder);
             StageModFolder(ModInfo.ConfigFolder);
@@ -151,6 +152,12 @@ namespace XCom2ModTool
             }
 
             DeployMod();
+        }
+
+        private void CleanSdkMods()
+        {
+            Report.Verbose("Cleaning SDK mods");
+            DirectoryHelper.DeleteDirectoryContents(edition.SdkModsPath);
         }
 
         private void CleanModStaging()
