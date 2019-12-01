@@ -22,6 +22,7 @@ namespace XCom2ModTool
         private static readonly string LogsFolderName = "Logs";
         private static readonly string SaveFolderName = "SaveData";
         private static readonly string LogFileName = "Launch.log";
+        private static readonly string ShaderCacheFileNameFormat = "{0}_ModShaderCache" + ModInfo.PackageExtension;
 
         private string path;
         private string sdkPath;
@@ -102,6 +103,16 @@ namespace XCom2ModTool
         public string GetModInstallPath(ModInfo modInfo)
         {
             return System.IO.Path.Combine(ModsPath, modInfo.RootFolder);
+        }
+
+        public string GetModShaderCacheStagingPath(ModInfo modInfo)
+        {
+            return System.IO.Path.Combine(GetModStagingPath(modInfo), ModInfo.ContentFolder, string.Format(ShaderCacheFileNameFormat, modInfo.ModName));
+        }
+
+        public string GetModShaderCacheInstallPath(ModInfo modInfo)
+        {
+            return System.IO.Path.Combine(GetModInstallPath(modInfo), ModInfo.ContentFolder, string.Format(ShaderCacheFileNameFormat, modInfo.ModName));
         }
 
         private string Combine(params string[] paths) => System.IO.Path.Combine(paths);

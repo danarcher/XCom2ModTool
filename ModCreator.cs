@@ -27,7 +27,7 @@ namespace XCom2ModTool
                 throw new Exception($"{modName} already exists");
             }
 
-            DirectoryHelper.Copy(sourcePath, targetPath);
+            DirectoryHelper.CopyDirectory(sourcePath, targetPath);
 
             DirectoryHelper.ReplaceDirectoryContents(
                 targetPath, 

@@ -51,6 +51,8 @@ namespace XCom2ModTool
         private ModProject modProject;
         private string modStagingPath;
         private string modInstallPath;
+        private string modShaderCacheStagingPath = null;
+        private string modShaderCacheInstallPath = null;
 
         private bool modHasSourceCode;
         private bool modHasShaderContent;
@@ -66,6 +68,8 @@ namespace XCom2ModTool
             compiler = new Compiler(edition);
             modStagingPath = edition.GetModStagingPath(modInfo);
             modInstallPath = edition.GetModInstallPath(modInfo);
+            modShaderCacheStagingPath = edition.GetModShaderCacheStagingPath(modInfo);
+            modShaderCacheInstallPath = edition.GetModShaderCacheInstallPath(modInfo);
             modHasSourceCode = modInfo.HasSourceCode();
             modHasShaderContent = modInfo.HasShaderContent();
             modStagingCompiledScriptFolderPath = Path.Combine(modStagingPath, ScriptFolderName);
@@ -140,12 +144,32 @@ namespace XCom2ModTool
                         CopyModSourceCodeToSdk();
                         SmartCleanSdkCompiledScripts();
                         break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(buildType));
                 }
 
                 CompileMod();
                 if (modHasShaderContent)
                 {
-                    CompileShaders();
+                    switch (buildType)
+                    {
+                        case ModBuildType.Full:
+                        case ModBuildType.Fast:
+                            CompileShaders();
+                            break;
+                        case ModBuildType.Smart:
+                            if (IsDeployedShaderCacheUpToDate())
+                            {
+                                CopyDeployedShaderCacheToStaging();
+                            }
+                            else
+                            {
+                                CompileShaders();
+                            }
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(buildType));
+                    }
                 }
                 StageModCompiledScripts();
                 SmartCleanSdkSourceCode();
@@ -180,7 +204,7 @@ namespace XCom2ModTool
             {
                 Report.Verbose($"Staging {folderName}");
                 var targetPath = Path.Combine(modStagingPath, folderName);
-                DirectoryHelper.Copy(sourcePath, targetPath);
+                DirectoryHelper.CopyDirectory(sourcePath, targetPath);
                 return true;
             }
             return false;
@@ -222,14 +246,14 @@ namespace XCom2ModTool
         private void RestoreSdkSourceCode()
         {
             Report.Verbose("Restoring SDK source");
-            var count = DirectoryHelper.Copy(edition.SdkOriginalSourceCodePath, edition.SdkSourceCodePath);
+            var count = DirectoryHelper.CopyDirectory(edition.SdkOriginalSourceCodePath, edition.SdkSourceCodePath);
             Report.Verbose($"Restored {count} files");
         }
 
         private void CopyModSourceCodeToSdk()
         {
             Report.Verbose("Copying mod source");
-            DirectoryHelper.Copy(modInfo.SourceCodePath, edition.SdkSourceCodePath);
+            DirectoryHelper.CopyDirectory(modInfo.SourceCodePath, edition.SdkSourceCodePath);
         }
 
         private void CleanSdkCompiledScripts()
@@ -328,6 +352,48 @@ namespace XCom2ModTool
             ThrowIfCancelled();
         }
 
+        private bool IsDeployedShaderCacheUpToDate()
+        {
+            var upToDate = false;
+            var shaderContent = modInfo.GetShaderContent();
+            if (shaderContent.Any())
+            {
+                var contentDate =
+                    shaderContent.Select(x => new FileInfo(x).LastWriteTime)
+                                 .OrderByDescending(x => x)
+                                 .ToArray()
+                                 .First();
+                Report.Verbose($"Shader content updated {contentDate:G}");
+
+                //Report.Verbose($"Shader cache expected at {modShaderCacheInstallPath}");
+                if (File.Exists(modShaderCacheInstallPath))
+                {
+                    var cacheDate = new FileInfo(modShaderCacheInstallPath).LastWriteTime;
+                    Report.Verbose($"Shader cache updated {cacheDate:G}");
+                    upToDate = cacheDate > contentDate;
+                }
+                else
+                {
+                    Report.Verbose("Shader cache not found");
+                }
+            }
+            if (upToDate)
+            {
+                Report.Verbose("Shader cache is up to date");
+            }
+            else
+            {
+                Report.Verbose("Shader cache is out of date");
+            }
+            return upToDate;
+        }
+
+        private void CopyDeployedShaderCacheToStaging()
+        {
+            Report.Verbose("Copying deployed shader cache to staging");
+            DirectoryHelper.CopyFile(modShaderCacheInstallPath, modShaderCacheStagingPath);
+        }
+
         private void StageModCompiledScripts()
         {
             Report.Verbose("Copying compiled script");
@@ -339,7 +405,7 @@ namespace XCom2ModTool
         {
             Report.Verbose("Deploying mod");
             DirectoryHelper.Delete(modInstallPath);
-            DirectoryHelper.Copy(modStagingPath, modInstallPath);
+            DirectoryHelper.CopyDirectory(modStagingPath, modInstallPath);
         }
     }
 }

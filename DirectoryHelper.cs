@@ -6,7 +6,7 @@ namespace XCom2ModTool
 {
     internal static class DirectoryHelper
     {
-        public static int Copy(string sourcePath, string targetPath)
+        public static int CopyDirectory(string sourcePath, string targetPath)
         {
             Directory.CreateDirectory(targetPath);
 
@@ -24,6 +24,12 @@ namespace XCom2ModTool
                 ++count;
             }
             return count;
+        }
+
+        public static void CopyFile(string sourcePath, string targetPath)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+            File.Copy(sourcePath, targetPath, true);
         }
 
         public static void DeleteByExtension(string path, SearchOption searchOption, StringComparison comparison, params string[] extensions)

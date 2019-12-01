@@ -16,6 +16,7 @@ namespace XCom2ModTool
         public static readonly string ContentFolder = "Content";
         public static readonly string ConfigFolder = "Config";
         public static readonly string LocalizationFolder = "Localization";
+        public static readonly string[] ShaderContentExtensions = new[] { PackageExtension, MapExtension };
 
         public ModInfo(string path)
         {
@@ -87,14 +88,18 @@ namespace XCom2ModTool
                    Directory.EnumerateFiles(SourceCodeInnerPath, "*" + SourceCodeExtension, SearchOption.AllDirectories).Any();
         }
 
-        public bool HasShaderContent()
+        public string[] GetShaderContent()
         {
-            return Directory.Exists(ContentPath) && 
-                   Directory.EnumerateFiles(ContentPath, "*.*", SearchOption.AllDirectories)
-                            .Select(x => Path.GetExtension(x))
-                            .Any(x => string.Equals(x, PackageExtension, StringComparison.OrdinalIgnoreCase) || 
-                                      string.Equals(x, MapExtension, StringComparison.OrdinalIgnoreCase));
+            if (!Directory.Exists(ContentPath))
+            {
+                return new string[0];
+            }
+            return Directory.EnumerateFiles(ContentPath, "*.*", SearchOption.AllDirectories)
+                            .Where(x => ShaderContentExtensions.Any(y => string.Equals(Path.GetExtension(x), y)))
+                            .ToArray();
         }
+
+        public bool HasShaderContent() => GetShaderContent().Any();
 
         public static bool FindModForCurrentDirectory(out ModInfo modInfo)
         {

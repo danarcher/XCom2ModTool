@@ -20,7 +20,7 @@ namespace XCom2ModTool
 
         public Dictionary<string, string> ReplacePaths = new Dictionary<string, string>();
 
-        public bool CompileGame() => Compile("make", "-debug", "-nopause", "-unattended");
+        public bool CompileGame() => Compile("make", "-debug", "-nopause", "-unattended", "-verbose");
 
         public bool CompileMod(string modName, string stagingPath) => Compile("make", "-debug", "-nopause", "-mods", modName, stagingPath);
 
@@ -92,7 +92,8 @@ namespace XCom2ModTool
                 (text.Contains(" = ") && text.Contains(" min")) ||
                 text.Contains("NumFullyLoadedPackages") ||
                 text.Contains("NumFastPackages") ||
-                text.Contains("Warning, INI file contains an incorrect case"))
+                text.Contains("Warning, INI file contains an incorrect case") ||
+                text.Contains("LoadAnIniFile was unable to find FilenameToLoad:"))
             {
                 // None of these lines are interesting.
                 return;
