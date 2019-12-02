@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace XCom2ModTool
         {
             try
             {
-                Run(args);
+                Run(args.ToList());
             }
             catch (Exception ex)
             {
@@ -37,7 +38,7 @@ namespace XCom2ModTool
             }
         }
 
-        private static void Run(string[] args)
+        private static void Run(List<string> args)
         {
             CancellationTokenSource cancellation = new CancellationTokenSource();
             Console.CancelKeyPress += (s, e) =>
@@ -48,20 +49,20 @@ namespace XCom2ModTool
 
             var edition = XCom2.Base;
 
-            while (args.Length > 0)
+            // Parse options.
+            for (var i = 0; i < args.Count; ++i)
             {
-                switch (args[0])
+                var arg = args[i];
+                switch (arg)
                 {
-                    case "help":
                     case "--help":
                     case "-h":
                     case "-?":
                     case "/help":
                     case "/h":
                     case "/?":
-                        Help(args.Skip(1).ToArray(), edition);
+                        Help(new List<string>(), edition);
                         return;
-                    case "version":
                     case "--version":
                     case "/version":
                         Version();
@@ -71,60 +72,92 @@ namespace XCom2ModTool
                     case "/verbose":
                     case "/v":
                         Report.IsVerbose = true;
-                        args = args.Skip(1).ToArray();
+                        args.RemoveAt(i--);
                         break;
                     case "--debug":
                     case "/debug":
                         Options.Debug = true;
-                        args = args.Skip(1).ToArray();
+                        args.RemoveAt(i--);
                         break;
                     case "--wotc":
-                    case "/wotc":
                     case "-w":
+                    case "/wotc":
                     case "/w":
                         edition = XCom2.Wotc;
-                        args = args.Skip(1).ToArray();
+                        args.RemoveAt(i--);
                         break;
-                    case "create":
-                        Create(args.Skip(1).ToArray());
-                        return;
-                    case "rename":
-                        Rename(args.Skip(1).ToArray());
-                        return;
-                    case "build":
-                        Build(args.Skip(1).ToArray(), edition, cancellation.Token);
-                        return;
-                    case "open":
-                        Open(args.Skip(1).ToArray(), edition);
-                        return;
-                    case "clip":
-                        Clip(args.Skip(1).ToArray(), edition);
-                        return;
-                    case "update-project":
-                        UpdateProject(args.Skip(1).ToArray(), edition);
-                        return;
-                    case "new-guid":
-                        NewGuid(args.Skip(1).ToArray(), edition);
-                        return;
-                    case "package-info":
-                        PackageInfo(args.Skip(1).ToArray());
-                        return;
-                    case "save-info":
-                        SaveInfo(args.Skip(1).ToArray());
-                        return;
+                    case "--base":
+                    case "--legacy":
+                    case "/base":
+                    case "/legacy":
+                        edition = XCom2.Base;
+                        args.RemoveAt(i--);
+                        break;
                     default:
-                        Report.Error($"{args[0]} is not a {Name} command. See '{Name} --help'.");
-                        Environment.ExitCode = 1;
-                        return;
+                        if (arg.StartsWith("-") || arg.StartsWith("/"))
+                        {
+                            Report.Error($"{arg} is not a {Name} option. See '{Name} --help'.");
+                            Environment.ExitCode = 1;
+                            return;
+                        }
+                        break;
                 }
             }
 
-            Help();
+            // Parse commands.
+            if (args.Count == 0)
+            {
+                Help();
+                return;
+            }
+
+            var command = args[0];
+            args.RemoveAt(0);
+            switch (command)
+            {
+                case "help":
+                    Help(args, edition);
+                    break;
+                case "version":
+                    Version();
+                    break;
+                case "create":
+                    Create(args);
+                    break;
+                case "rename":
+                    Rename(args);
+                    break;
+                case "build":
+                    Build(args, edition, cancellation.Token);
+                    break;
+                case "open":
+                    Open(args, edition);
+                    break;
+                case "clip":
+                    Clip(args, edition);
+                    break;
+                case "update-project":
+                    UpdateProject(args, edition);
+                    break;
+                case "new-guid":
+                    NewGuid(args, edition);
+                    break;
+                case "package-info":
+                    PackageInfo(args);
+                    break;
+                case "save-info":
+                    SaveInfo(args);
+                    break;
+                default:
+                    Report.Error($"{command} is not a {Name} command. See '{Name} --help'.");
+                    Environment.ExitCode = 1;
+                    break;
+            }
         }
 
-        private static void Create(string[] args)
+        private static void Create(List<string> args)
         {
-            if (args.Length != 1)
+            if (args.Count != 1)
             {
                 HelpCreate();
                 return;
@@ -133,9 +166,9 @@ namespace XCom2ModTool
             ModCreator.Create(args[0]);
         }
 
-        private static void Rename(string[] args)
+        private static void Rename(List<string> args)
         {
-            if (args.Length != 2)
+            if (args.Count != 2)
             {
                 HelpRename();
                 return;
@@ -144,16 +177,17 @@ namespace XCom2ModTool
             ModRenamer.Rename(args[0], args[1]);
         }
 
-        private static void Build(string[] args, XCom2Edition edition, CancellationToken cancellation)
+        private static void Build(List<string> args, XCom2Edition edition, CancellationToken cancellation)
         {
-            if (args.Length > 0 && args[0] == "clean")
+            if (args.Count > 0 && args[0] == "clean")
             {
-                BuildClean(args.Skip(1).ToArray(), edition, cancellation);
+                args.RemoveAt(0);
+                BuildClean(args, edition, cancellation);
                 return;
             }
 
             var buildType = ModBuildType.Smart;
-            while (args.Length > 0)
+            while (args.Count > 0)
             {
                 if (args[0] == "full")
                 {
@@ -171,10 +205,10 @@ namespace XCom2ModTool
                 {
                     break;
                 }
-                args = args.Skip(1).ToArray();
+                args.RemoveAt(0);
             }
 
-            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
+            if (!LocateMod(args, out ModInfo modInfo) || args.Count > 0)
             {
                 HelpBuild();
                 return;
@@ -184,9 +218,9 @@ namespace XCom2ModTool
             builder.Build(buildType);
         }
 
-        private static void BuildClean(string[] args, XCom2Edition edition, CancellationToken cancellation)
+        private static void BuildClean(List<string> args, XCom2Edition edition, CancellationToken cancellation)
         {
-            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
+            if (!LocateMod(args, out ModInfo modInfo) || args.Count > 0)
             {
                 HelpBuild();
                 return;
@@ -196,9 +230,9 @@ namespace XCom2ModTool
             builder.Clean();
         }
 
-        private static void Open(string[] args, XCom2Edition edition)
+        private static void Open(List<string> args, XCom2Edition edition)
         {
-            if (args.Length != 1)
+            if (args.Count != 1)
             {
                 HelpOpen(edition);
                 return;
@@ -215,9 +249,9 @@ namespace XCom2ModTool
             }
         }
 
-        private static void Clip(string[] args, XCom2Edition edition)
+        private static void Clip(List<string> args, XCom2Edition edition)
         {
-            if (args.Length != 1)
+            if (args.Count != 1)
             {
                 HelpClip(edition);
                 return;
@@ -234,9 +268,9 @@ namespace XCom2ModTool
             }
         }
 
-        private static void UpdateProject(string[] args, XCom2Edition edition)
+        private static void UpdateProject(List<string> args, XCom2Edition edition)
         {
-            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
+            if (!LocateMod(args, out ModInfo modInfo) || args.Count > 0)
             {
                 HelpUpdateProject();
                 return;
@@ -247,9 +281,9 @@ namespace XCom2ModTool
             project.Save(modInfo.ProjectPath);
         }
 
-        private static void NewGuid(string[] args, XCom2Edition edition)
+        private static void NewGuid(List<string> args, XCom2Edition edition)
         {
-            if (!LocateMod(ref args, out ModInfo modInfo) || args.Length > 0)
+            if (!LocateMod(args, out ModInfo modInfo) || args.Count > 0)
             {
                 HelpNewGuid();
                 return;
@@ -260,9 +294,9 @@ namespace XCom2ModTool
             project.Save(modInfo.ProjectPath);
         }
 
-        private static void PackageInfo(string[] args)
+        private static void PackageInfo(List<string> args)
         {
-            if (args.Length != 1)
+            if (args.Count != 1)
             {
                 HelpPackageInfo();
                 return;
@@ -287,9 +321,9 @@ namespace XCom2ModTool
             }
         }
 
-        private static void SaveInfo(string[] args)
+        private static void SaveInfo(List<string> args)
         {
-            if (args.Length != 1)
+            if (args.Count != 1)
             {
                 HelpSaveInfo();
                 return;
@@ -324,6 +358,8 @@ namespace XCom2ModTool
             Console.WriteLine($"Options vary by command; see '{Name} help <command>'.");
             Console.WriteLine();
             Console.WriteLine($"Specify -w or --wotc for {XCom2.Wotc.DisplayName}.");
+            Console.WriteLine($"Specify --base or --legacy for {XCom2.Base.DisplayName}.");
+            Console.WriteLine($"The default is {XCom2.Base.DisplayName}.");
             Console.WriteLine();
             Console.WriteLine("Commands:");
             Console.WriteLine("  help           Display help on a command");
@@ -340,9 +376,9 @@ namespace XCom2ModTool
             Paths();
         }
 
-        private static void Help(string[] args, XCom2Edition edition)
+        private static void Help(List<string> args, XCom2Edition edition)
         {
-            var command = args.Length > 0 ? args[0] : string.Empty;
+            var command = args.Count > 0 ? args[0] : string.Empty;
             var help = command switch
             {
                 "create" => HelpCreate,
@@ -372,6 +408,12 @@ namespace XCom2ModTool
             Console.WriteLine($"{Name} rename <from folder> <to folder>");
         }
 
+        private static void HelpFolderContext()
+        {
+            Console.WriteLine();
+            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+        }
+
         private static void HelpBuild()
         {
             Console.WriteLine("To build a mod:");
@@ -379,8 +421,7 @@ namespace XCom2ModTool
             Console.WriteLine();
             Console.WriteLine("To clean a mod's build:");
             Console.WriteLine($"{Name} build clean [<folder>]");
-            Console.WriteLine();
-            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+            HelpFolderContext();
         }
 
         private static void HelpUpdateProject()
@@ -389,8 +430,7 @@ namespace XCom2ModTool
             Console.WriteLine($"{Name} update-project [<folder>]");
             Console.WriteLine();
             Console.WriteLine("This sets the project's included files to equal the set of existent files.");
-            Console.WriteLine();
-            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+            HelpFolderContext();
         }
 
         private static void HelpNewGuid()
@@ -399,8 +439,7 @@ namespace XCom2ModTool
             Console.WriteLine($"{Name} new-guid [<folder>]");
             Console.WriteLine();
             Console.WriteLine("This updates the project with a new GUID for the mod.");
-            Console.WriteLine();
-            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+            HelpFolderContext();
         }
 
         private static void HelpPackageInfo()
@@ -466,16 +505,16 @@ namespace XCom2ModTool
             }
         }
 
-        private static bool LocateMod(ref string[] args, out ModInfo modInfo)
+        private static bool LocateMod(List<string> args, out ModInfo modInfo)
         {
             if (!ModInfo.FindModForCurrentDirectory(out modInfo))
             {
-                if (args.Length < 1)
+                if (args.Count < 1)
                 {
                     return false;
                 }
                 modInfo = new ModInfo(args[0]);
-                args = args.Skip(1).ToArray();
+                args.RemoveAt(0);
             }
             else
             {
