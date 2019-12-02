@@ -63,15 +63,15 @@ ModBuddy performs all of these steps, even if they're unnecessary, which they us
 This tool only compiles the game if it needs to, which means a build is often faster, as it's just:
 
 - Updating only the relevant parts of `%SDK%\Development\Src`
-- Cleaning only your scripts from `%SDK%\XComGame\Script`
+- Cleaning only non-standard scripts from `%SDK%\XComGame\Script`
 - Compiling your mod from source
-- Compiling your mod's shaders
+- Compiling your mod's shaders if necessary
 
 If your mod is INI and/or INT only, the tool skips most of these steps as well.
 
 It only compiles shaders if it finds `.upk` or `.umap` files in your mod's
-Content folder. In future it may be smarter, since if these files haven't
-changed since your last build, then recompiling shaders is unnecessary.
+Content folder, and if any of them are more recent than the shader cache most
+recently built for your mod (or if there is no such shader cache).
 
 The game scripts do need to be rebuilt if you switch from a debug to release
 build. The tool detects this by checking whether the SDK's `Core.u`
@@ -79,6 +79,11 @@ file was last built in debug or release; by default, it'll do a debug build
 if the game was built in debug, or a release build otherwise. If you want to
 change between debug and release, you can explicitly do a `build full` for
 release or a `--debug build full` for debug. Release is the default.
+
+The tool also removes other mods from your %SDK%\XComGame\Mods folder before
+building. This avoids inadvertent dependencies, excess warning messages from
+the SDK compiler, and longer builds. It doesn't remove other mods from your game
+mod folders, of course.
 
 ## Renaming Mods
 
