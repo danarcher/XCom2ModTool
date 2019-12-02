@@ -1,12 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Security;
 using System.Xml.Linq;
 
 namespace XCom2ModTool
 {
     internal static class Report
     {
-        public static bool IsVerbose = false;
+        public static Verbosity Verbosity { get; set; } = Verbosity.Concise;
 
         public static void Error(string message)
         {
@@ -25,9 +26,9 @@ namespace XCom2ModTool
             WriteXmlLine(Console.Out, $"<info>{message}</info>");
         }
 
-        public static void Verbose(string message)
+        public static void Verbose(string message, Verbosity verbosity = Verbosity.Verbose)
         {
-            if (IsVerbose)
+            if (Verbosity >= verbosity)
             {
                 WriteXmlLine(Console.Out, $"<verbose>{message}</verbose>");
             }
@@ -36,9 +37,9 @@ namespace XCom2ModTool
         public static void Exception(Exception ex, string message = null)
         {
             Error(message ?? ex.Message);
-            if (IsVerbose)
+            if (Verbosity >= Verbosity.Verbose)
             {
-                Error(ex.ToString());
+                Error(SecurityElement.Escape(ex.ToString()));
             }
         }
 
@@ -102,5 +103,13 @@ namespace XCom2ModTool
                 Console.ForegroundColor = previousColor;
             }
         }
+    }
+
+    internal enum Verbosity
+    {
+        Concise = 0,
+        Verbose = 1,
+        Loquacious = 2,
+        Periphrastic = 3,
     }
 }

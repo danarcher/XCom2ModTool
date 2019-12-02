@@ -11,7 +11,8 @@ namespace XCom2ModTool
         private static readonly string ScriptFolderName = "Script";
         private static readonly string ScriptExtension = ".u";
         private static readonly string CompiledScriptManifestName = "Manifest.txt";
-        private static readonly string KeyStandardPackageCompiledScriptFileName = "Core" + ScriptExtension;
+        private static readonly string KeyStandardPackageCompiledScriptFileName = "XComGame" + ScriptExtension;
+        private static readonly string HighlanderIndicativeExportName = "CHXComGameVersionTemplate";
 
         private static readonly string[] StandardSourceCodeFolderNames = new[]
         {
@@ -98,6 +99,19 @@ namespace XCom2ModTool
                 Report.Warning($"Mod name {modInfo.ModName} does not match title '{modProject.Title}' in project {modInfo.ProjectName}");
             }
 
+            // Switching between building with/without the highlander requires a full build.
+            if (IsSdkBuiltWithHighlander() != Settings.Default.Highlander)
+            {
+                var highlander = Settings.Default.Highlander;
+                Report.Warning($"This is a {(highlander ? "" : "non-")}highlander build, but {KeyStandardPackageCompiledScriptFileName} was {(highlander ? "not " : "")}built with the highlander; switching to full build");
+                buildType = ModBuildType.Full;
+            }
+            else
+            {
+                var highlander = Settings.Default.Highlander;
+                Report.Verbose($"This is a {(highlander ? "" : "non-")}highlander build, as is {KeyStandardPackageCompiledScriptFileName}");
+            }
+
             CleanModStaging();
             ThrowIfCancelled();
 
@@ -178,6 +192,16 @@ namespace XCom2ModTool
             DeployMod();
         }
 
+        private bool IsSdkBuiltWithHighlander()
+        {
+            var path = Path.Combine(edition.SdkXComGameCompiledScriptPath, KeyStandardPackageCompiledScriptFileName);
+            using (var reader = new PackageReader(path))
+            {
+                var header = reader.ReadHeader();
+                return header.Exports.Any(x => string.Equals(x.Name, HighlanderIndicativeExportName, StringComparison.Ordinal));
+            }
+        }
+
         private void CleanSdkMods()
         {
             Report.Verbose("Cleaning SDK mods");
@@ -229,9 +253,10 @@ namespace XCom2ModTool
             foreach (var folderPath in Directory.GetDirectories(edition.SdkSourceCodePath))
             {
                 var folderName = Path.GetFileName(folderPath);
-                if (!StandardSourceCodeFolderNames.Any(x => string.Equals(x, folderName, StringComparison.OrdinalIgnoreCase)))
+                if (!StandardSourceCodeFolderNames.Any(x => string.Equals(x, folderName, StringComparison.OrdinalIgnoreCase)) &&
+                    (!Settings.Default.Highlander || !string.Equals(folderName, edition.SdkHighlanderSourceCodeFolderName)))
                 {
-                    Report.Verbose($"  Deleting non-standard source {folderName}");
+                    Report.Verbose($"  Deleting non-standard source {folderName}", Verbosity.Loquacious);
                     DirectoryHelper.Delete(folderPath);
                 }
             }
@@ -248,6 +273,12 @@ namespace XCom2ModTool
             Report.Verbose("Restoring SDK source");
             var count = DirectoryHelper.CopyDirectory(edition.SdkOriginalSourceCodePath, edition.SdkSourceCodePath);
             Report.Verbose($"Restored {count} files");
+            if (Settings.Default.Highlander)
+            {
+                Report.Verbose("Restoring highlander source");
+                count = DirectoryHelper.CopyDirectory(edition.HighlanderModSourceCodePath, edition.SdkSourceCodePath);
+                Report.Verbose($"Restored {count} files");
+            }
         }
 
         private void CopyModSourceCodeToSdk()
@@ -293,12 +324,12 @@ namespace XCom2ModTool
                 var fileName = Path.GetFileName(filePath);
                 if (!StandardCompiledScripts.Any(x => string.Equals(x, fileName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Report.Verbose($"  Deleting non-standard compiled script file {fileName}");
+                    Report.Verbose($"  Deleting non-standard compiled script file {fileName}", Verbosity.Loquacious);
                     DirectoryHelper.Delete(filePath);
                 }
             }
 
-            Report.Verbose("Smart-cleaning compiled script manifest");
+            Report.Verbose("Smart-cleaning compiled script manifest", Verbosity.Loquacious);
             var manifestPath = Path.Combine(edition.SdkXComGameCompiledScriptPath, CompiledScriptManifestName);
             var lines = File.ReadAllLines(manifestPath).ToList();
             for (var i = 0; i < lines.Count; ++i)
@@ -310,7 +341,7 @@ namespace XCom2ModTool
                     var module = parts[2];
                     if (!StandardManifestModules.Any(x => string.Equals(x, module, StringComparison.OrdinalIgnoreCase)))
                     {
-                        Report.Verbose($"  Removing line {line}");
+                        Report.Verbose($"  Removing line {line}", Verbosity.Periphrastic);
                         lines.RemoveAt(i);
                         --i;
                     }

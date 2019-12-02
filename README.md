@@ -93,6 +93,24 @@ building. This avoids inadvertent dependencies, excess warning messages from
 the SDK compiler, and longer builds. It doesn't remove other mods from your game
 mod folders, of course.
 
+## Building Mods against the Community Highlander
+
+Supply the `--highlander` option to have the tool automatically handle
+building your mod against the community highlander.
+
+This currently requires that you have `X2CommunityHighlander` (or
+`X2WOTCCommunityHighlander`, as appropriate) in your game's Mods (not Steam
+mods, and not SDK mods) folder.
+
+There is no need to copy highlander source into SrcOrig; the tool will ensure
+highlander source is copied to (and removed from) `%SDK\Development\Src` when
+necessary.
+
+Smart builds are still possible with or without the `--highlander` option. The
+tool checks XComGame.u to determine whether it was built against the highlander,
+compares this to the presence (or absence) of the `--highlander` option, and
+switches to a full build when strictly necessary.
+
 ## Renaming Mods
 
 The `rename` command can rename mods. Renaming a mod involves changing:

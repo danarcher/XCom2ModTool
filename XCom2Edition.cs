@@ -23,17 +23,20 @@ namespace XCom2ModTool
         private static readonly string SaveFolderName = "SaveData";
         private static readonly string LogFileName = "Launch.log";
         private static readonly string ShaderCacheFileNameFormat = "{0}_ModShaderCache" + ModInfo.PackageExtension;
+        private static readonly string HighlanderSourceCodeFolderName = "Src";
 
         private string path;
         private string sdkPath;
         private string userGameFolderName;
+        private string highlanderName;
 
-        public XCom2Edition(string internalName, string displayName, string steamAppName, string subFolderName, string sdkSteamAppName, string userGameFolderName, bool isExpansion = false)
+        public XCom2Edition(string internalName, string displayName, string steamAppName, string subFolderName, string sdkSteamAppName, string userGameFolderName, string highlanderName, bool isExpansion = false)
         {
             InternalName = internalName;
             DisplayName = displayName;
             IsExpansion = isExpansion;
             this.userGameFolderName = userGameFolderName;
+            this.highlanderName = highlanderName;
 
             if (Steam.TryFindApp(steamAppName, out string path))
             {
@@ -96,6 +99,12 @@ namespace XCom2ModTool
         public string UserSavePath => Combine(UserPath, SaveFolderName);
 
         public string EditorPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkEditorName);
+
+        public string HighlanderModSourceCodePath => Combine(XComGamePath, ModsFolderName, highlanderName, HighlanderSourceCodeFolderName);
+
+        public string SdkHighlanderSourceCodePath => Combine(SdkSourceCodePath, highlanderName);
+
+        public string SdkHighlanderSourceCodeFolderName => highlanderName;
 
         public string GetModStagingPath(ModInfo modInfo)
         {

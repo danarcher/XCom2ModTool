@@ -16,8 +16,11 @@
         private static readonly string UserGameFolderName = "XCOM2";
         private static readonly string WotcUserGameFolderName = "XCOM2 War of the Chosen";
 
-        public static readonly XCom2Edition Base = new XCom2Edition(BaseInternalName, BaseDisplayName, SteamAppName, null, SdkSteamAppName, UserGameFolderName);
-        public static readonly XCom2Edition Wotc = new XCom2Edition(WotcInternalName, WotcDisplayName, SteamAppName, WotcFolderName, WotcSdkSteamAppName, WotcUserGameFolderName, isExpansion: true);
+        private static readonly string BaseHighlanderName = "X2CommunityHighlander";
+        private static readonly string WotcHighlanderName = "X2WOTCCommunityHighlander";
+
+        public static readonly XCom2Edition Base = new XCom2Edition(BaseInternalName, BaseDisplayName, SteamAppName, null, SdkSteamAppName, UserGameFolderName, BaseHighlanderName);
+        public static readonly XCom2Edition Wotc = new XCom2Edition(WotcInternalName, WotcDisplayName, SteamAppName, WotcFolderName, WotcSdkSteamAppName, WotcUserGameFolderName, WotcHighlanderName, isExpansion: true);
 
         public static readonly XCom2Edition[] Editions = { Base, Wotc };
     }

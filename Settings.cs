@@ -15,6 +15,9 @@ namespace XCom2ModTool
         [JsonIgnore]
         public bool Debug { get; set; }
 
+        [JsonIgnore]
+        public bool Highlander { get; set; }
+
         [JsonConverter(typeof(EditionJsonConverter))]
         public XCom2Edition Edition { get; set; } = XCom2.Base;
 

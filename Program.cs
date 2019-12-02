@@ -77,12 +77,27 @@ namespace XCom2ModTool
                     case "-v":
                     case "/verbose":
                     case "/v":
-                        Report.IsVerbose = true;
+                        Report.Verbosity = Verbosity.Verbose;
+                        args.RemoveAt(i--);
+                        break;
+                    case "-vv":
+                    case "/vv":
+                        Report.Verbosity = Verbosity.Loquacious;
+                        args.RemoveAt(i--);
+                        break;
+                    case "-vvv":
+                    case "/vvv":
+                        Report.Verbosity = Verbosity.Periphrastic;
                         args.RemoveAt(i--);
                         break;
                     case "--debug":
                     case "/debug":
                         Settings.Default.Debug = true;
+                        args.RemoveAt(i--);
+                        break;
+                    case "--highlander":
+                    case "/highlander":
+                        Settings.Default.Highlander = true;
                         args.RemoveAt(i--);
                         break;
                     default:
@@ -142,10 +157,10 @@ namespace XCom2ModTool
                     NewGuid(args, edition);
                     break;
                 case "package-info":
-                    PackageInfo(args);
+                    PackageInfo(args, cancellation.Token);
                     break;
                 case "save-info":
-                    SaveInfo(args);
+                    SaveInfo(args, cancellation.Token);
                     break;
                 default:
                     Report.Error($"{command} is not a {Name} command. See '{Name} --help'.");
@@ -304,7 +319,7 @@ namespace XCom2ModTool
             project.Save(modInfo.ProjectPath);
         }
 
-        private static void PackageInfo(List<string> args)
+        private static void PackageInfo(List<string> args, CancellationToken cancellation)
         {
             if (args.Count != 1)
             {
@@ -327,11 +342,12 @@ namespace XCom2ModTool
                         break;
                     }
                     Report.WriteLine(text);
+                    cancellation.ThrowIfCancellationRequested();
                 }
             }
         }
 
-        private static void SaveInfo(List<string> args)
+        private static void SaveInfo(List<string> args, CancellationToken cancellation)
         {
             if (args.Count != 1)
             {
@@ -354,6 +370,7 @@ namespace XCom2ModTool
                         break;
                     }
                     Report.WriteLine(text);
+                    cancellation.ThrowIfCancellationRequested();
                 }
             }
         }
@@ -437,7 +454,18 @@ namespace XCom2ModTool
         private static void HelpBuild()
         {
             Report.WriteLine("To build a mod:");
-            Report.WriteLine($"{Name} [--debug] build [full | fast | smart] [\\<folder>]");
+            Report.WriteLine($"{Name} [--debug] [--highlander] build [full | fast | smart] [\\<folder>]");
+            Report.WriteLine();
+            Report.WriteLine("Options:");
+            Report.WriteLine("  <yellow>--debug</yellow>       Make this a debug build rather than release");
+            Report.WriteLine("  <yellow>--highlander</yellow>  Build this mod against the community highlander");
+            Report.WriteLine();
+            Report.WriteLine("Build Types:");
+            Report.WriteLine("  <yellow>full</yellow>          Build game scripts, mod scripts and mod shaders");
+            Report.WriteLine("  <yellow>fast</yellow>          Build mod scripts and mod shaders");
+            Report.WriteLine("  <yellow>smart</yellow>         Minimise unnecessary work for a faster build");
+            Report.WriteLine();
+            Report.WriteLine("The default is a smart, release build without the highlander.");
             Report.WriteLine();
             Report.WriteLine("To clean a mod's build:");
             Report.WriteLine($"{Name} build clean [\\<folder>]");
@@ -499,7 +527,7 @@ namespace XCom2ModTool
             {
                 var indent = new string(' ', length - folder.name.Length);
                 Report.WriteLine($"  {folder.name}{indent}{folder.describe(edition)}");
-                if (Report.IsVerbose)
+                if (Report.Verbosity >= Verbosity.Verbose)
                 {
                     indent = new string(' ', length);
                     string path;
@@ -518,7 +546,7 @@ namespace XCom2ModTool
                     }
                 }
             }
-            if (!Report.IsVerbose)
+            if (Report.Verbosity < Verbosity.Verbose)
             {
                 Report.WriteLine();
                 Report.WriteLine($"Use '{Name} --verbose {command}' to see folder paths.");
