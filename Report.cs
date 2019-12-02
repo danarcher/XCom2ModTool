@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Xml.Linq;
 
 namespace XCom2ModTool
 {
@@ -8,25 +10,26 @@ namespace XCom2ModTool
 
         public static void Error(string message)
         {
-            using (new ColorChange(Settings.Default.ErrorColor))
-            {
-                Console.Error.WriteLine($"error: {message}");
-            }
+            WriteXmlLine(Console.Error, $"<error>error: {message}</error>");
         }
 
         public static void Warning(string message)
         {
-            using (new ColorChange(Settings.Default.WarningColor))
-            {
-                Console.Error.WriteLine($"warning: {message}");
-            }
+            WriteXmlLine(Console.Error, $"<warning>warning: {message}</warning>");
+        }
+
+        public static void WriteLine() => Console.WriteLine();
+
+        public static void WriteLine(string message)
+        {
+            WriteXmlLine(Console.Out, $"<info>{message}</info>");
         }
 
         public static void Verbose(string message)
         {
-            using (new ColorChange(Settings.Default.VerboseColor))
+            if (IsVerbose)
             {
-                Console.Error.WriteLine(message);
+                WriteXmlLine(Console.Out, $"<verbose>{message}</verbose>");
             }
         }
 
@@ -35,11 +38,50 @@ namespace XCom2ModTool
             Error(message ?? ex.Message);
             if (IsVerbose)
             {
-                using (new ColorChange(Settings.Default.ErrorColor))
-                {
-                    Console.Error.WriteLine(ex.ToString());
-                }
+                Error(ex.ToString());
             }
+        }
+
+        public static void WriteXmlLine(TextWriter writer, string message)
+        {
+            message = message.Replace("\\<", "&lt;");
+
+            var doc = XDocument.Parse($"<?xml version=\"1.0\"?><root>{message}</root>", LoadOptions.PreserveWhitespace);
+
+            void Expand(XElement element)
+            {
+                var previousColor = Console.ForegroundColor;
+
+                if (Settings.Default.UseColoredOutput)
+                {
+                    Console.ForegroundColor = element.Name.LocalName switch
+                    {
+                        "error" => Settings.Default.ErrorColor,
+                        "warning" => Settings.Default.WarningColor,
+                        "verbose" => Settings.Default.VerboseColor,
+                        "info" => Settings.Default.InfoColor,
+                        _ => Enum.TryParse(element.Name.LocalName, ignoreCase: true, out ConsoleColor color) ? color : previousColor
+                    };
+                }
+
+                foreach (var node in element.Nodes())
+                {
+                    switch (node)
+                    {
+                        case XElement child:
+                            Expand(child);
+                            break;
+                        case XText text:
+                            writer.Write(text.Value);
+                            break;
+                    }
+                }
+
+                Console.ForegroundColor = previousColor;
+            }
+
+            Expand(doc.Root);
+            writer.WriteLine();
         }
 
         public class ColorChange : IDisposable

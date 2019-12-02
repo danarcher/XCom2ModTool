@@ -27,6 +27,9 @@ namespace XCom2ModTool
         public ConsoleColor WarningColor { get; set; } = ConsoleColor.Yellow;
 
         [JsonConverter(typeof(StringEnumConverter))]
+        public ConsoleColor InfoColor { get; set; } = ConsoleColor.Gray;
+
+        [JsonConverter(typeof(StringEnumConverter))]
         public ConsoleColor VerboseColor { get; set; } = ConsoleColor.Gray;
 
         public static void Load()

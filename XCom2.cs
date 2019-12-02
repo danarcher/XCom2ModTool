@@ -5,8 +5,8 @@
         private static readonly string BaseInternalName = "XCOM2";
         private static readonly string WotcInternalName = "WOTC";
 
-        private static readonly string BaseDisplayName = "XCOM 2 (Base/Legacy)";
-        private static readonly string WotcDisplayName = "War of the Chosen";
+        private static readonly string BaseDisplayName = "<cyan>XCOM 2 (Base/Legacy)</cyan>";
+        private static readonly string WotcDisplayName = "<red>War of the Chosen</red>";
 
         private static readonly string SteamAppName = "XCOM 2";
         private static readonly string WotcFolderName = "XCom2-WarOfTheChosen";

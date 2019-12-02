@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -147,18 +148,17 @@ namespace XCom2ModTool
                 }
             }
 
-            Report.ColorChange colorChange = null;
+            text = SecurityElement.Escape(text);
             if (text.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0 && !text.Contains("0 errors"))
             {
-                colorChange = new Report.ColorChange(Settings.Default.ErrorColor);
+                text = $"<error>{text}</error>";
             }
             else if (text.IndexOf("warning", StringComparison.InvariantCultureIgnoreCase) >= 0 && !text.Contains("0 warnings"))
             {
-                colorChange = new Report.ColorChange(Settings.Default.WarningColor);
+                text = $"<warning>{text}</warning>";
             }
 
-            writer.WriteLine(text);
-            colorChange?.Dispose();
+            Report.WriteXmlLine(writer, text);
         }
     }
 }

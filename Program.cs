@@ -23,6 +23,8 @@ namespace XCom2ModTool
         [STAThread]
         public static void Main(string[] args)
         {
+            Settings.Load();
+
             try
             {
                 Run(args.ToList());
@@ -37,7 +39,7 @@ namespace XCom2ModTool
 
             if (Debugger.IsAttached)
             {
-                Console.WriteLine("[Press any key to exit.]");
+                Report.WriteLine("[Press any key to exit.]");
                 Console.ReadKey();
             }
         }
@@ -51,28 +53,9 @@ namespace XCom2ModTool
                 cancellation.Cancel();
             };
 
-            // Parse verbosity.
-            for (var i = 0; i < args.Count; ++i)
-            {
-                var arg = args[i];
-                switch (arg)
-                {
-                    case "--verbose":
-                    case "-v":
-                    case "/verbose":
-                    case "/v":
-                        Report.IsVerbose = true;
-                        args.RemoveAt(i--);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            Settings.Load();
             var edition = Settings.Default.Edition;
 
-            // Parse other options.
+            // Parse options.
             for (var i = 0; i < args.Count; ++i)
             {
                 var arg = args[i];
@@ -90,6 +73,13 @@ namespace XCom2ModTool
                     case "/version":
                         Version();
                         return;
+                    case "--verbose":
+                    case "-v":
+                    case "/verbose":
+                    case "/v":
+                        Report.IsVerbose = true;
+                        args.RemoveAt(i--);
+                        break;
                     case "--debug":
                     case "/debug":
                         Settings.Default.Debug = true;
@@ -336,7 +326,7 @@ namespace XCom2ModTool
                     {
                         break;
                     }
-                    Console.WriteLine(text);
+                    Report.WriteLine(text);
                 }
             }
         }
@@ -363,7 +353,7 @@ namespace XCom2ModTool
                     {
                         break;
                     }
-                    Console.WriteLine(text);
+                    Report.WriteLine(text);
                 }
             }
         }
@@ -371,27 +361,27 @@ namespace XCom2ModTool
         private static void Help(XCom2Edition edition)
         {
             var indent = new string(' ', Name.Length);
-            Console.WriteLine($"usage: {Name} [--version ] [ -v | --verbose ]");
-            Console.WriteLine($"       {indent} [options]");
-            Console.WriteLine($"       {indent} <command> [<args>]");
-            Console.WriteLine();
-            Console.WriteLine($"Options vary by command; see '{Name} help <command>'.");
-            Console.WriteLine();
-            Console.WriteLine($"Currently working on {edition.DisplayName}.");
-            Console.WriteLine();
-            Console.WriteLine("Commands:");
-            Console.WriteLine("  help                  Display help on a command");
-            Console.WriteLine($"  wotc | base | legacy  Switch between {XCom2.Wotc.DisplayName} and {XCom2.Base.DisplayName}");
-            Console.WriteLine("  create                Create a mod");
-            Console.WriteLine("  rename                Rename a mod");
-            Console.WriteLine("  build                 Build a mod");
-            Console.WriteLine("  open                  Open a specific XCOM folder");
-            Console.WriteLine("  clip                  Copy a specific XCOM folder to the clipboard");
-            Console.WriteLine("  update-project        Update a mod's project file");
-            Console.WriteLine("  new-guid              Generate a new GUID for a mod");
-            Console.WriteLine("  package-info          Display info on an Unreal package");
-            Console.WriteLine("  save-info             Display info on a save file");
-            Console.WriteLine();
+            Report.WriteLine($"usage: <green>{Name}</green> [--version ] [ -v | --verbose ]");
+            Report.WriteLine($"       {indent} [options]");
+            Report.WriteLine($"       {indent} \\<command> [\\<args>]");
+            Report.WriteLine();
+            Report.WriteLine($"Options vary by command; see '{Name} help \\<command>'.");
+            Report.WriteLine();
+            Report.WriteLine($"Currently working on {edition.DisplayName}.");
+            Report.WriteLine();
+            Report.WriteLine("Commands:");
+            Report.WriteLine("  <yellow>help</yellow>                  Display help on a command");
+            Report.WriteLine($"  <yellow>wotc</yellow> | <yellow>base</yellow> | <yellow>legacy</yellow>  Switch between game editions");
+            Report.WriteLine("  <yellow>create</yellow>                Create a mod");
+            Report.WriteLine("  <yellow>rename</yellow>                Rename a mod");
+            Report.WriteLine("  <yellow>build</yellow>                 Build a mod");
+            Report.WriteLine("  <yellow>open</yellow>                  Open a specific game folder");
+            Report.WriteLine("  <yellow>clip</yellow>                  Copy a specific game folder to the clipboard");
+            Report.WriteLine("  <yellow>update-project</yellow>        Update a mod's project file");
+            Report.WriteLine("  <yellow>new-guid</yellow>              Generate a new GUID for a mod");
+            Report.WriteLine("  <yellow>package-info</yellow>          Display info on an Unreal package");
+            Report.WriteLine("  <yellow>save-info</yellow>             Display info on a save file");
+            Report.WriteLine();
             Paths();
         }
 
@@ -420,95 +410,95 @@ namespace XCom2ModTool
 
         private static void HelpSetEdition()
         {
-            Console.WriteLine($"To switch between {XCom2.Wotc.DisplayName} and {XCom2.Base.DisplayName}:");
-            Console.WriteLine($"{Name} wotc");
-            Console.WriteLine($"{Name} base");
-            Console.WriteLine($"{Name} legacy");
+            Report.WriteLine($"To switch between {XCom2.Wotc.DisplayName} and {XCom2.Base.DisplayName}:");
+            Report.WriteLine($"{Name} wotc");
+            Report.WriteLine($"{Name} base");
+            Report.WriteLine($"{Name} legacy");
         }
 
         private static void HelpCreate()
         {
-            Console.WriteLine("To create a mod:");
-            Console.WriteLine($"{Name} create <folder>");
+            Report.WriteLine("To create a mod:");
+            Report.WriteLine($"{Name} create \\<folder>");
         }
 
         private static void HelpRename()
         {
-            Console.WriteLine("To rename a mod:");
-            Console.WriteLine($"{Name} rename <from folder> <to folder>");
+            Report.WriteLine("To rename a mod:");
+            Report.WriteLine($"{Name} rename \\<from folder> \\<to folder>");
         }
 
         private static void HelpFolderContext()
         {
-            Console.WriteLine();
-            Console.WriteLine("If no folder is specified, the current directory must be part of a mod.");
+            Report.WriteLine();
+            Report.WriteLine("If no folder is specified, the current directory must be part of a mod.");
         }
 
         private static void HelpBuild()
         {
-            Console.WriteLine("To build a mod:");
-            Console.WriteLine($"{Name} [--debug] build [full | fast | smart] [<folder>]");
-            Console.WriteLine();
-            Console.WriteLine("To clean a mod's build:");
-            Console.WriteLine($"{Name} build clean [<folder>]");
+            Report.WriteLine("To build a mod:");
+            Report.WriteLine($"{Name} [--debug] build [full | fast | smart] [\\<folder>]");
+            Report.WriteLine();
+            Report.WriteLine("To clean a mod's build:");
+            Report.WriteLine($"{Name} build clean [\\<folder>]");
             HelpFolderContext();
         }
 
         private static void HelpUpdateProject()
         {
-            Console.WriteLine("To update a mod's project:");
-            Console.WriteLine($"{Name} update-project [<folder>]");
-            Console.WriteLine();
-            Console.WriteLine("This sets the project's included files to equal the set of existent files.");
+            Report.WriteLine("To update a mod's project:");
+            Report.WriteLine($"{Name} update-project [\\<folder>]");
+            Report.WriteLine();
+            Report.WriteLine("This sets the project's included files to equal the set of existent files.");
             HelpFolderContext();
         }
 
         private static void HelpNewGuid()
         {
-            Console.WriteLine("To generate a new GUID for a mod project:");
-            Console.WriteLine($"{Name} new-guid [<folder>]");
-            Console.WriteLine();
-            Console.WriteLine("This updates the project with a new GUID for the mod.");
+            Report.WriteLine("To generate a new GUID for a mod project:");
+            Report.WriteLine($"{Name} new-guid [\\<folder>]");
+            Report.WriteLine();
+            Report.WriteLine("This updates the project with a new GUID for the mod.");
             HelpFolderContext();
         }
 
         private static void HelpPackageInfo()
         {
-            Console.WriteLine("To display info on an Unreal package:");
-            Console.WriteLine($"{Name} package-info <file>");
+            Report.WriteLine("To display info on an Unreal package:");
+            Report.WriteLine($"{Name} package-info \\<file>");
         }
 
         private static void HelpSaveInfo()
         {
-            Console.WriteLine("To display info on a save file:");
-            Console.WriteLine($"{Name} save-info <file>");
+            Report.WriteLine("To display info on a save file:");
+            Report.WriteLine($"{Name} save-info \\<file>");
         }
 
         private static void HelpOpen(XCom2Edition edition)
         {
-            Console.WriteLine("To open a specific XCOM 2 folder or program:");
-            Console.WriteLine($"{Name} open <name>");
-            Console.WriteLine();
+            Report.WriteLine("To open a specific XCOM 2 folder or program:");
+            Report.WriteLine($"{Name} open \\<name>");
+            Report.WriteLine();
             ListFolders(edition, "open");
         }
 
         private static void HelpClip(XCom2Edition edition)
         {
-            Console.WriteLine("To copy a specific XCOM 2 path to the clipboard:");
-            Console.WriteLine($"{Name} clip <name>");
-            Console.WriteLine();
+            Report.WriteLine("To copy a specific XCOM 2 path to the clipboard:");
+            Report.WriteLine($"{Name} clip \\<name>");
+            Report.WriteLine();
             ListFolders(edition, "clip");
         }
 
         private static void ListFolders(XCom2Edition edition, string command)
         {
-            Console.WriteLine("Names:");
+            Report.WriteLine("Names:");
             var folders = XCom2Browser.GetFolders();
             var length = folders.Max(x => x.name.Length) + 2;
             foreach (var folder in folders)
             {
                 var indent = new string(' ', length - folder.name.Length);
-                Console.WriteLine($"  {folder.name}{indent}{folder.describe(edition)}");
+                Report.WriteLine($"  {folder.name}{indent}{folder.describe(edition)}");
                 if (Report.IsVerbose)
                 {
                     indent = new string(' ', length);
@@ -524,14 +514,14 @@ namespace XCom2ModTool
                     Report.Verbose($"  {indent}{path}");
                     if (folder != folders.Last())
                     {
-                        Console.WriteLine();
+                        Report.WriteLine();
                     }
                 }
             }
             if (!Report.IsVerbose)
             {
-                Console.WriteLine();
-                Console.WriteLine($"Use '{Name} --verbose {command}' to see folder paths.");
+                Report.WriteLine();
+                Report.WriteLine($"Use '{Name} --verbose {command}' to see folder paths.");
             }
         }
 
@@ -562,24 +552,24 @@ namespace XCom2ModTool
             var vdfVersion = vdfAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             var vdfCopyright = vdfAssembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
 
-            Console.WriteLine($"{Name} version {version}");
-            Console.WriteLine(copyright);
-            Console.WriteLine("https://github.com/danarcher/xcom2modtool");
-            Console.WriteLine("Licensed under the GPL v2.0 to comply with LZO");
-            Console.WriteLine();
+            Report.WriteLine($"<green>{ProductName}</green> version {version}");
+            Report.WriteLine(copyright);
+            Report.WriteLine("<cyan>https://github.com/danarcher/xcom2modtool</cyan>");
+            Report.WriteLine("Licensed under the GPL v2.0 to comply with LZO");
+            Report.WriteLine();
 
-            Console.WriteLine($"Gameloop.Vdf {vdfVersion}");
-            Console.WriteLine($"{vdfCopyright}");
-            Console.WriteLine("Licensed under the MIT License");
-            Console.WriteLine("https://github.com/shravan2x/Gameloop.Vdf");
-            Console.WriteLine();
+            Report.WriteLine($"<darkgreen>Gameloop.Vdf</darkgreen> {vdfVersion}");
+            Report.WriteLine($"{vdfCopyright}");
+            Report.WriteLine("Licensed under the MIT License");
+            Report.WriteLine("<cyan>https://github.com/shravan2x/Gameloop.Vdf</cyan>");
+            Report.WriteLine();
 
-            Console.WriteLine($"LZO {Lzo.Version} {Lzo.VersionDate}");
-            Console.WriteLine("Copyright © 1996 - 2017 Markus F.X.J.Oberhumer");
-            Console.WriteLine("Licensed under the GPL v2.0");
-            Console.WriteLine("http://www.oberhumer.com/opensource/lzo/");
+            Report.WriteLine($"<darkgreen>LZO</darkgreen> {Lzo.Version} {Lzo.VersionDate}");
+            Report.WriteLine("Copyright © 1996 - 2017 Markus F.X.J.Oberhumer");
+            Report.WriteLine("Licensed under the GPL v2.0");
+            Report.WriteLine("<cyan>http://www.oberhumer.com/opensource/lzo/</cyan>");
 
-            Console.WriteLine();
+            Report.WriteLine();
             Paths();
         }
 
@@ -587,8 +577,8 @@ namespace XCom2ModTool
         {
             foreach (var edition in new[] { XCom2.Base, XCom2.Wotc })
             {
-                Console.WriteLine($"{edition.DisplayName} is {(edition.IsInstalled ? edition.Path : "not found")}");
-                Console.WriteLine($"{edition.SdkDisplayName} is {(edition.IsSdkInstalled ? edition.SdkPath : "not found")}");
+                Report.WriteLine($"{edition.DisplayName} is {(edition.IsInstalled ? edition.Path : "not found")}");
+                Report.WriteLine($"{edition.SdkDisplayName} is {(edition.IsSdkInstalled ? edition.SdkPath : "not found")}");
             }
         }
     }
