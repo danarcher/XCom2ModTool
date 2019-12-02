@@ -12,6 +12,8 @@ namespace XCom2ModTool
 {
     internal static class Program
     {
+        public static string ProductName { get; } = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyProductAttribute>().Product;
+
         public static string Name { get; } = Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
 
         public static string HomePath { get; } = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
@@ -31,6 +33,8 @@ namespace XCom2ModTool
                 Environment.ExitCode = 1;
             }
 
+            Settings.Save();
+
             if (Debugger.IsAttached)
             {
                 Console.WriteLine("[Press any key to exit.]");
@@ -47,9 +51,28 @@ namespace XCom2ModTool
                 cancellation.Cancel();
             };
 
-            var edition = XCom2.Base;
+            // Parse verbosity.
+            for (var i = 0; i < args.Count; ++i)
+            {
+                var arg = args[i];
+                switch (arg)
+                {
+                    case "--verbose":
+                    case "-v":
+                    case "/verbose":
+                    case "/v":
+                        Report.IsVerbose = true;
+                        args.RemoveAt(i--);
+                        break;
+                    default:
+                        break;
+                }
+            }
 
-            // Parse options.
+            Settings.Load();
+            var edition = Settings.Default.Edition;
+
+            // Parse other options.
             for (var i = 0; i < args.Count; ++i)
             {
                 var arg = args[i];
@@ -67,30 +90,9 @@ namespace XCom2ModTool
                     case "/version":
                         Version();
                         return;
-                    case "--verbose":
-                    case "-v":
-                    case "/verbose":
-                    case "/v":
-                        Report.IsVerbose = true;
-                        args.RemoveAt(i--);
-                        break;
                     case "--debug":
                     case "/debug":
-                        Options.Debug = true;
-                        args.RemoveAt(i--);
-                        break;
-                    case "--wotc":
-                    case "-w":
-                    case "/wotc":
-                    case "/w":
-                        edition = XCom2.Wotc;
-                        args.RemoveAt(i--);
-                        break;
-                    case "--base":
-                    case "--legacy":
-                    case "/base":
-                    case "/legacy":
-                        edition = XCom2.Base;
+                        Settings.Default.Debug = true;
                         args.RemoveAt(i--);
                         break;
                     default:
@@ -107,7 +109,7 @@ namespace XCom2ModTool
             // Parse commands.
             if (args.Count == 0)
             {
-                Help();
+                Help(edition);
                 return;
             }
 
@@ -120,6 +122,13 @@ namespace XCom2ModTool
                     break;
                 case "version":
                     Version();
+                    break;
+                case "wotc":
+                    SetEdition(args, XCom2.Wotc);
+                    break;
+                case "base":
+                case "legacy":
+                    SetEdition(args, XCom2.Base);
                     break;
                 case "create":
                     Create(args);
@@ -153,6 +162,17 @@ namespace XCom2ModTool
                     Environment.ExitCode = 1;
                     break;
             }
+        }
+
+        private static void SetEdition(List<string> args, XCom2Edition edition)
+        {
+            if (args.Count != 0)
+            {
+                HelpSetEdition();
+                return;
+            }
+
+            Settings.Default.Edition = edition;
         }
 
         private static void Create(List<string> args)
@@ -348,30 +368,29 @@ namespace XCom2ModTool
             }
         }
 
-        private static void Help()
+        private static void Help(XCom2Edition edition)
         {
             var indent = new string(' ', Name.Length);
-            Console.WriteLine($"usage: {Name} [--version ] [-w | --wotc] [ -v | --verbose ]");
+            Console.WriteLine($"usage: {Name} [--version ] [ -v | --verbose ]");
             Console.WriteLine($"       {indent} [options]");
             Console.WriteLine($"       {indent} <command> [<args>]");
             Console.WriteLine();
             Console.WriteLine($"Options vary by command; see '{Name} help <command>'.");
             Console.WriteLine();
-            Console.WriteLine($"Specify -w or --wotc for {XCom2.Wotc.DisplayName}.");
-            Console.WriteLine($"Specify --base or --legacy for {XCom2.Base.DisplayName}.");
-            Console.WriteLine($"The default is {XCom2.Base.DisplayName}.");
+            Console.WriteLine($"Currently working on {edition.DisplayName}.");
             Console.WriteLine();
             Console.WriteLine("Commands:");
-            Console.WriteLine("  help           Display help on a command");
-            Console.WriteLine("  create         Create a mod");
-            Console.WriteLine("  rename         Rename a mod");
-            Console.WriteLine("  build          Build a mod");
-            Console.WriteLine("  open           Open a specific XCOM folder");
-            Console.WriteLine("  clip           Copy a specific XCOM folder to the clipboard");
-            Console.WriteLine("  update-project Update a mod's project file");
-            Console.WriteLine("  new-guid       Generate a new GUID for a mod");
-            Console.WriteLine("  package-info   Display info on an Unreal package");
-            Console.WriteLine("  save-info  Display info on a save file");
+            Console.WriteLine("  help                  Display help on a command");
+            Console.WriteLine($"  wotc | base | legacy  Switch between {XCom2.Wotc.DisplayName} and {XCom2.Base.DisplayName}");
+            Console.WriteLine("  create                Create a mod");
+            Console.WriteLine("  rename                Rename a mod");
+            Console.WriteLine("  build                 Build a mod");
+            Console.WriteLine("  open                  Open a specific XCOM folder");
+            Console.WriteLine("  clip                  Copy a specific XCOM folder to the clipboard");
+            Console.WriteLine("  update-project        Update a mod's project file");
+            Console.WriteLine("  new-guid              Generate a new GUID for a mod");
+            Console.WriteLine("  package-info          Display info on an Unreal package");
+            Console.WriteLine("  save-info             Display info on a save file");
             Console.WriteLine();
             Paths();
         }
@@ -381,6 +400,9 @@ namespace XCom2ModTool
             var command = args.Count > 0 ? args[0] : string.Empty;
             var help = command switch
             {
+                "wotc" => HelpSetEdition,
+                "base" => HelpSetEdition,
+                "legacy" => HelpSetEdition,
                 "create" => HelpCreate,
                 "rename" => HelpRename,
                 "build" => HelpBuild,
@@ -390,10 +412,18 @@ namespace XCom2ModTool
                 "new-guid" => HelpNewGuid,
                 "package-info" => HelpPackageInfo,
                 "save-info" => HelpSaveInfo,
-                _ => (Action)Help,
+                _ => new Action(() => Help(edition)),
             };
             help();
             return;
+        }
+
+        private static void HelpSetEdition()
+        {
+            Console.WriteLine($"To switch between {XCom2.Wotc.DisplayName} and {XCom2.Base.DisplayName}:");
+            Console.WriteLine($"{Name} wotc");
+            Console.WriteLine($"{Name} base");
+            Console.WriteLine($"{Name} legacy");
         }
 
         private static void HelpCreate()
@@ -491,7 +521,7 @@ namespace XCom2ModTool
                     {
                         path = $"{ex.Message}";
                     }
-                    Console.WriteLine($"  {indent}{path}");
+                    Report.Verbose($"  {indent}{path}");
                     if (folder != folders.Last())
                     {
                         Console.WriteLine();

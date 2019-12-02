@@ -69,7 +69,7 @@
     <Compile Include="ModCreator.cs" />
     <Compile Include="ModInfo.cs" />
     <Compile Include="ModRenamer.cs" />
-    <Compile Include="Options.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Lzo.cs" />
     <Compile Include="SaveGameReader.cs" />
     <Compile Include="UnrealPackages\CompressedBlock.cs" />

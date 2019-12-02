@@ -28,8 +28,9 @@ namespace XCom2ModTool
         private string sdkPath;
         private string userGameFolderName;
 
-        public XCom2Edition(string displayName, string steamAppName, string subFolderName, string sdkSteamAppName, string userGameFolderName, bool isExpansion = false)
+        public XCom2Edition(string internalName, string displayName, string steamAppName, string subFolderName, string sdkSteamAppName, string userGameFolderName, bool isExpansion = false)
         {
+            InternalName = internalName;
             DisplayName = displayName;
             IsExpansion = isExpansion;
             this.userGameFolderName = userGameFolderName;
@@ -59,6 +60,7 @@ namespace XCom2ModTool
         public bool IsInstalled => !string.IsNullOrEmpty(path);
         public bool IsSdkInstalled => !string.IsNullOrEmpty(sdkPath);
 
+        public string InternalName { get; }
         public string DisplayName { get; }
         public string SdkDisplayName => $"{DisplayName} SDK";
         public bool IsExpansion { get; }

@@ -28,7 +28,7 @@ namespace XCom2ModTool
 
         private bool Compile(params string[] args)
         {
-            if (!Options.Debug)
+            if (!Settings.Default.Debug)
             {
                 args = args.Except(new[] { "-debug" }).ToArray();
             }
@@ -147,24 +147,18 @@ namespace XCom2ModTool
                 }
             }
 
-            var previousColor = Console.ForegroundColor;
-
+            Report.ColorChange colorChange = null;
             if (text.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0 && !text.Contains("0 errors"))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
+                colorChange = new Report.ColorChange(Settings.Default.ErrorColor);
             }
             else if (text.IndexOf("warning", StringComparison.InvariantCultureIgnoreCase) >= 0 && !text.Contains("0 warnings"))
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.White;
+                colorChange = new Report.ColorChange(Settings.Default.WarningColor);
             }
 
             writer.WriteLine(text);
-
-            Console.ForegroundColor = previousColor;
+            colorChange?.Dispose();
         }
     }
 }

@@ -135,10 +135,10 @@ namespace XCom2ModTool
                             Report.Verbose($"{KeyStandardPackageCompiledScriptFileName} invalid or not found, switching to full build");
                             goto case ModBuildType.Full;
                         }
-                        if (Options.Debug != flags.Value.HasFlag(PackageFlags.Debug))
+                        if (Settings.Default.Debug != flags.Value.HasFlag(PackageFlags.Debug))
                         {
-                            Options.Debug = !Options.Debug;
-                            Report.Verbose($"Detected {(Options.Debug ? "debug" : "release")} build of {KeyStandardPackageCompiledScriptFileName}");
+                            Settings.Default.Debug = !Settings.Default.Debug;
+                            Report.Verbose($"Detected {(Settings.Default.Debug ? "debug" : "release")} build of {KeyStandardPackageCompiledScriptFileName}");
                         }
                         SmartCleanSdkSourceCode();
                         CopyModSourceCodeToSdk();

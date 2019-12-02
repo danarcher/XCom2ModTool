@@ -22,24 +22,32 @@ Steam running.
 
 ## Usage
 
-    usage: XCom2ModTool [--version ] [-w | --wotc] [ -v | --verbose ]
+    usage: XCom2ModTool [--version ] [ -v | --verbose ]
                         [options]
                         <command> [<args>]
 
 Commands include:
 
-      help           Display help on a command
-      create         Create a mod
-      rename         Rename a mod
-      build          Build a mod
-      open           Open a specific XCOM folder
-      clip           Copy a specific XCOM folder to the clipboard
-      update-project Update a mod's project file
+      help                  Display help on a command
+      wotc | base | legacy  Switch between War of the Chosen and XCOM 2 (Base/Legacy)
+      create                Create a mod
+      rename                Rename a mod
+      build                 Build a mod
+      open                  Open a specific XCOM folder
+      clip                  Copy a specific XCOM folder to the clipboard
+      update-project        Update a mod's project file
 
 Other commands may be available.
 
-Specify `-w` or `--wotc` when working on War of the Chosen mods, or to open
-War of the Chosen rather than base game folders.
+## Editions
+
+By default the tool is set to work on base/legacy edition of XCOM 2. The
+`wotc` and `base` (or `legacy`) commands will switch between that and War of the
+Chosen, and this setting persists across successive uses of the tool.
+
+The tool uses the correct folder paths for the selected edition of the game and
+SDK. When building War of the Chosen mods, built mods are flagged as War of the
+Chosen mods via the `RequiresXPACK=true` entry in their mod metadata.
 
 ## Building Mods
 
@@ -103,6 +111,11 @@ these for you.
 The tool tries to be smart about it: it's better than grep, but worse than human
 effort. It's no doubt possible to craft a mod which the tool will helpfully
 break for you. Backups are recommended, though I use it without issues.
+
+## Settings
+
+The tool saves its persistent settings in JSON format in
+`%APPDATA%\XCom2ModTool\settings.json`.
 
 ## License
 
