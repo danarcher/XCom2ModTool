@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace XCom2ModTool
 {
-    public class AbbreviatedByteArrayJsonConverter : JsonConverter
+    internal class AbbreviatedByteArrayJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) => typeof(byte[]).Equals(objectType);
 

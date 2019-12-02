@@ -7,7 +7,7 @@ namespace XCom2ModTool
     /// <summary>
     /// Interop for the native LZO compression library.
     /// </summary>
-    public class Lzo
+    internal class Lzo
     {
         private const int LZO_E_OK = 0;
         private const int LZO_E_ERROR = -1;
