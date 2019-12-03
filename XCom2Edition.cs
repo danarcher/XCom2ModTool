@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 namespace XCom2ModTool
 {
@@ -100,10 +101,6 @@ namespace XCom2ModTool
 
         public string EditorPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkEditorName);
 
-        public string HighlanderModSourceCodePath => Combine(XComGamePath, ModsFolderName, highlanderName, HighlanderSourceCodeFolderName);
-
-        public string SdkHighlanderSourceCodePath => Combine(SdkSourceCodePath, highlanderName);
-
         public string SdkHighlanderSourceCodeFolderName => highlanderName;
 
         public string GetModStagingPath(ModInfo modInfo)
@@ -124,6 +121,26 @@ namespace XCom2ModTool
         public string GetModShaderCacheInstallPath(ModInfo modInfo)
         {
             return System.IO.Path.Combine(GetModInstallPath(modInfo), ModInfo.ContentFolder, string.Format(ShaderCacheFileNameFormat, modInfo.ModName));
+        }
+
+        public string GetHighlanderModSourceCodePath()
+        {
+            var highlanderPaths = Steam.FindAppWorkshopItemPaths(XCom2.SteamAppId)
+                                       .Append(Combine(XComGamePath, ModsFolderName, highlanderName))
+                                       .Select(x => Combine(x, highlanderName + ModMetadata.Extension))
+                                       .Where(x => File.Exists(x))
+                                       .Select(x => System.IO.Path.GetDirectoryName(x))
+                                       .ToArray();
+            if (highlanderPaths.Length == 0)
+            {
+                throw new Exception($"Highlander not found in {DisplayName} Mods or Steam workshop folders");
+            }
+            if (highlanderPaths.Length > 1)
+            {
+                var details = highlanderPaths.Zip(Enumerable.Range(1, highlanderPaths.Length), (x, y) => $"{y}. {x}");
+                throw new DetailedException($"Multiple ({highlanderPaths.Length}) highlanders found in {DisplayName} Mods folder and/or Steam workshop folders", details.ToArray());
+            }
+            return Combine(highlanderPaths.Single(), HighlanderSourceCodeFolderName);
         }
 
         private string Combine(params string[] paths) => System.IO.Path.Combine(paths);

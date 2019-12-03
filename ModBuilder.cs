@@ -275,8 +275,9 @@ namespace XCom2ModTool
             Report.Verbose($"Restored {count} files");
             if (Settings.Default.Highlander)
             {
-                Report.Verbose("Restoring highlander source");
-                count = DirectoryHelper.CopyDirectory(edition.HighlanderModSourceCodePath, edition.SdkSourceCodePath);
+                var highlanderSourceCodePath = edition.GetHighlanderModSourceCodePath();
+                Report.Verbose($"Restoring highlander source from {highlanderSourceCodePath}");
+                count = DirectoryHelper.CopyDirectory(highlanderSourceCodePath, edition.SdkSourceCodePath);
                 Report.Verbose($"Restored {count} files");
             }
         }

@@ -37,6 +37,14 @@ namespace XCom2ModTool
         public static void Exception(Exception ex, string message = null)
         {
             Error(message ?? ex.Message);
+            var detailed = ex as DetailedException;
+            if (detailed != null)
+            {
+                foreach (var detail in detailed.Details)
+                {
+                    WriteXmlLine(Console.Error, $"       <error>{detail}</error>"); // No "error: " prefix, but indented to it
+                }
+            }
             if (Verbosity >= Verbosity.Verbose)
             {
                 Error(SecurityElement.Escape(ex.ToString()));

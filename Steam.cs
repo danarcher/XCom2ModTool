@@ -10,9 +10,11 @@ namespace XCom2ModTool
 {
     internal static class Steam
     {
-        private static string AppsFolderName = "steamapps";
-        private static string CommonFolderName = "common";
-        private static string LibraryFoldersFileName = "libraryfolders.vdf";
+        private static readonly string AppsFolderName = "steamapps";
+        private static readonly string CommonFolderName = "common";
+        private static readonly string LibraryFoldersFileName = "libraryfolders.vdf";
+        private static readonly string WorkshopFolderName = "workshop";
+        private static readonly string WorkshopContentFolderName = "content";
 
         public static string InstallPath { get; } = FindInstallPath();
         public static string[] LibraryPaths { get; } = FindLibraryPaths();
@@ -73,6 +75,33 @@ namespace XCom2ModTool
                 throw new DirectoryNotFoundException($"Steam install of {appName} not found");
             }
             return path;
+        }
+
+        public static IEnumerable<string> FindAppWorkshopPaths(int appId)
+        {
+            var pathsFound = new List<string>();
+            foreach (var libraryPath in LibraryPaths)
+            {
+                var path = Path.Combine(libraryPath, AppsFolderName, WorkshopFolderName, WorkshopContentFolderName, appId.ToString(CultureInfo.InvariantCulture));
+                if (Directory.Exists(path))
+                {
+                    yield return path;
+                }
+            }
+        }
+
+        public static IEnumerable<string> FindAppWorkshopItemPaths(int appId)
+        {
+            foreach (var workshopPath in FindAppWorkshopPaths(appId))
+            {
+                foreach (var itemPath in Directory.EnumerateDirectories(workshopPath, "*", SearchOption.TopDirectoryOnly))
+                {
+                    if (int.TryParse(Path.GetFileName(itemPath), NumberStyles.None, CultureInfo.InvariantCulture, out int itemNumber))
+                    {
+                        yield return itemPath;
+                    }
+                }
+            }
         }
     }
 }

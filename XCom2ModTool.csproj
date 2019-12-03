@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="BinaryDataReader.cs" />
     <Compile Include="Compiler.cs" />
+    <Compile Include="DetailedException.cs" />
     <Compile Include="DirectoryHelper.cs" />
     <Compile Include="BZip2Crc.cs" />
     <Compile Include="HexJsonConverter.cs" />

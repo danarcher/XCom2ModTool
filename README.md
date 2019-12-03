@@ -7,6 +7,7 @@ Amongst other things, this tool can:
 - Create new (mostly empty) mods
 - Rename a mod, making all required changes (though I'd take a backup first!)
 - Build mods without opening ModBuddy
+- Build mods against the community highlander without fiddling with SrcOrig
 - Quickly navigate to useful XCOM 2 folders
 - Update .x2proj files to include all of a mod's files
 
@@ -98,13 +99,19 @@ mod folders, of course.
 Supply the `--highlander` option to have the tool automatically handle
 building your mod against the community highlander.
 
-This currently requires that you have `X2CommunityHighlander` (or
-`X2WOTCCommunityHighlander`, as appropriate) in your game's Mods (not Steam
-mods, and not SDK mods) folder.
+You will need to have `X2CommunityHighlander` (or `X2WOTCCommunityHighlander`,
+as appropriate) installed in either the relevant game (not SDK) Mods folder or
+via the Steam workshop, just as you would need in order to run the game with
+the highlander.
 
 There is no need to copy highlander source into SrcOrig; the tool will ensure
-highlander source is copied to (and removed from) `%SDK\Development\Src` when
-necessary.
+highlander source is copied to `%SDK\Development\Src` if you're building a mod
+against the highlander, and will remove highlander source from there if you're
+not building against the highlander.
+
+The tool doesn't need to (and won't) modify SrcOrig, and instead presumes
+SrcOrig is the original SDK source. Hence if you've modified SrcOrig with
+highlander code, it's best to undo that before using the tool.
 
 Smart builds are still possible with or without the `--highlander` option. The
 tool checks XComGame.u to determine whether it was built against the highlander,

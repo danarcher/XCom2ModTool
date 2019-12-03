@@ -19,6 +19,8 @@
         private static readonly string BaseHighlanderName = "X2CommunityHighlander";
         private static readonly string WotcHighlanderName = "X2WOTCCommunityHighlander";
 
+        public static readonly int SteamAppId = 268500;
+
         public static readonly XCom2Edition Base = new XCom2Edition(BaseInternalName, BaseDisplayName, SteamAppName, null, SdkSteamAppName, UserGameFolderName, BaseHighlanderName);
         public static readonly XCom2Edition Wotc = new XCom2Edition(WotcInternalName, WotcDisplayName, SteamAppName, WotcFolderName, WotcSdkSteamAppName, WotcUserGameFolderName, WotcHighlanderName, isExpansion: true);
 
