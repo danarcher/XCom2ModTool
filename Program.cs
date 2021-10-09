@@ -576,20 +576,10 @@ namespace XCom2ModTool
             var version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             var copyright = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
 
-            var vdfAssembly = Assembly.GetAssembly(typeof(Gameloop.Vdf.VdfConvert));
-            var vdfVersion = vdfAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
-            var vdfCopyright = vdfAssembly.GetCustomAttribute<AssemblyCopyrightAttribute>().Copyright;
-
             Report.WriteLine($"<green>{ProductName}</green> version {version}");
             Report.WriteLine(copyright);
             Report.WriteLine("<cyan>https://github.com/danarcher/xcom2modtool</cyan>");
             Report.WriteLine("Licensed under the GPL v2.0 to comply with LZO");
-            Report.WriteLine();
-
-            Report.WriteLine($"<darkgreen>Gameloop.Vdf</darkgreen> {vdfVersion}");
-            Report.WriteLine($"{vdfCopyright}");
-            Report.WriteLine("Licensed under the MIT License");
-            Report.WriteLine("<cyan>https://github.com/shravan2x/Gameloop.Vdf</cyan>");
             Report.WriteLine();
 
             Report.WriteLine($"<darkgreen>LZO</darkgreen> {Lzo.Version} {Lzo.VersionDate}");

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using Gameloop.Vdf;
-using Gameloop.Vdf.Linq;
 using Microsoft.Win32;
 
 namespace XCom2ModTool
@@ -15,6 +12,7 @@ namespace XCom2ModTool
         private static readonly string LibraryFoldersFileName = "libraryfolders.vdf";
         private static readonly string WorkshopFolderName = "workshop";
         private static readonly string WorkshopContentFolderName = "content";
+        private static readonly string PathDelimeter = "\"path\"";
 
         public static string InstallPath { get; } = FindInstallPath();
         public static string[] LibraryPaths { get; } = FindLibraryPaths();
@@ -31,22 +29,18 @@ namespace XCom2ModTool
         private static string[] FindLibraryPaths()
         {
             var path = Path.Combine(InstallPath, AppsFolderName, LibraryFoldersFileName);
-            var contents = VdfConvert.Deserialize(File.ReadAllText(path));
+            var lines = File.ReadAllLines(path);
             var paths = new List<string>();
-            foreach (var item in contents.Value)
+            foreach (var line in lines)
             {
-                var property = item as VProperty;
-                if (property != null &&
-                    int.TryParse(property.Key, NumberStyles.None, CultureInfo.InvariantCulture, out int index))
+                var pathIndex = line.IndexOf(PathDelimeter);
+                if (pathIndex >= 0)
                 {
-                    var value = property.Value as VValue;
-                    if (value != null)
+                    var text = line.Substring(pathIndex + PathDelimeter.Length + 1);
+                    text = text.Trim().Trim('\"').Replace("\\\\", "\\");
+                    if (!string.IsNullOrEmpty(text))
                     {
-                        var text = value.Value as string;
-                        if (text != null)
-                        {
-                            paths.Add(text);
-                        }
+                        paths.Add(text);
                     }
                 }
             }
