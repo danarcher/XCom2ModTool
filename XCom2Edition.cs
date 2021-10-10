@@ -13,6 +13,8 @@ namespace XCom2ModTool
         private static readonly string SdkDevelopmentFolderName = "Development";
         private static readonly string SdkSourceCodeFolderName = "Src";
         private static readonly string SdkOriginalSourceCodeFolderName = "SrcOrig";
+        private static readonly string SdkSourceCodeXComGameFolderName = "XComGame";
+        private static readonly string SdkSourceCodeClassesFolderName = "Classes";
         private static readonly string SdkScriptFolderName = "Script";
         private static readonly string SdkBinariesFolderName = "binaries";
         private static readonly string SdkWin64FolderName = "win64";
@@ -84,6 +86,8 @@ namespace XCom2ModTool
         public string SdkModsPath => Combine(SdkXComGamePath, ModsFolderName);
 
         public string SdkSourceCodePath => Combine(SdkPath, SdkDevelopmentFolderName, SdkSourceCodeFolderName);
+
+        public string SdkSourceCodeClassesPath => Combine(SdkPath, SdkDevelopmentFolderName, SdkSourceCodeFolderName, SdkSourceCodeXComGameFolderName, SdkSourceCodeClassesFolderName);
 
         public string SdkOriginalSourceCodePath => Combine(SdkPath, SdkDevelopmentFolderName, SdkOriginalSourceCodeFolderName);
 

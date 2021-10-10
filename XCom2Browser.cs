@@ -18,6 +18,7 @@ namespace XCom2ModTool
                 ("mods", x => $"The {x.DisplayName} mods folder", x => x.ModsPath, null),
                 ("sdk", x => $"The {x.SdkDisplayName} folder", x => x.SdkPath, null),
                 ("sdk-mods", x => $"The {x.SdkDisplayName} mods folder", x => x.SdkModsPath, null),
+                ("sdk-src", x => $"The {x.SdkDisplayName} source folder", x => x.SdkSourceCodeClassesPath, null),
                 ("config", x => $"The current user's {x.DisplayName} config folder", x => x.UserConfigPath, null),
                 ("log", x => $"The current user's {x.DisplayName} log file", x => x.UserLogPath, null),
                 ("save", x => $"The current user's {x.DisplayName} save folder", x => x.UserSavePath, null),
