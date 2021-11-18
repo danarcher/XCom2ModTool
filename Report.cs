@@ -26,6 +26,11 @@ namespace XCom2ModTool
             WriteXmlLine(Console.Out, $"<info>{message}</info>");
         }
 
+        public static void Write(string message)
+        {
+            WriteXml(Console.Out, $"<info>{message}</info>");
+        }
+
         public static void Verbose(string message, Verbosity verbosity = Verbosity.Verbose)
         {
             if (Verbosity >= verbosity)
@@ -51,7 +56,7 @@ namespace XCom2ModTool
             }
         }
 
-        public static void WriteXmlLine(TextWriter writer, string message)
+        public static void WriteXml(TextWriter writer, string message)
         {
             message = message.Replace("\\<", "&lt;");
 
@@ -90,6 +95,11 @@ namespace XCom2ModTool
             }
 
             Expand(doc.Root);
+        }
+
+        public static void WriteXmlLine(TextWriter writer, string message)
+        {
+            WriteXml(writer, message);
             writer.WriteLine();
         }
 

@@ -53,7 +53,7 @@ namespace XCom2ModTool
                 cancellation.Cancel();
             };
 
-            var edition = Settings.Default.Edition;
+            var edition = Settings.Default.Editions[Settings.Default.Edition];
 
             // Parse options.
             for (var i = 0; i < args.Count; ++i)
@@ -128,13 +128,6 @@ namespace XCom2ModTool
                 case "version":
                     Version();
                     break;
-                case "wotc":
-                    SetEdition(args, XCom2.Wotc);
-                    break;
-                case "base":
-                case "legacy":
-                    SetEdition(args, XCom2.Base);
-                    break;
                 case "create":
                     Create(args);
                     break;
@@ -163,13 +156,26 @@ namespace XCom2ModTool
                     SaveInfo(args, cancellation.Token);
                     break;
                 default:
-                    Report.Error($"{command} is not a {Name} command. See '{Name} --help'.");
-                    Environment.ExitCode = 1;
+                    if (!TrySetEdition(args, command)) {
+                        Report.Error($"{command} is not a {Name} command. See '{Name} --help'.");
+                        Environment.ExitCode = 1;
+                    }                    
                     break;
             }
         }
 
-        private static void SetEdition(List<string> args, XCom2Edition edition)
+        private static bool TrySetEdition(List<string> args, string query) {
+            try {
+                string editionInternalName = Settings.Default.Shortnames[query];
+                XCom2Edition edition = Settings.Default.Editions[editionInternalName];
+                SetEdition(args, editionInternalName);
+                return true;
+            } catch {}
+
+            return false;
+        }
+
+        private static void SetEdition(List<string> args, string edition)
         {
             if (args.Count != 0)
             {
@@ -388,7 +394,19 @@ namespace XCom2ModTool
             Report.WriteLine();
             Report.WriteLine("Commands:");
             Report.WriteLine("  <yellow>help</yellow>                  Display help on a command");
-            Report.WriteLine($"  <yellow>wotc</yellow> | <yellow>base</yellow> | <yellow>legacy</yellow>  Switch between game editions");
+            var first = true;
+
+            foreach (KeyValuePair<string, string> shortname in Settings.Default.Shortnames) {
+                if (first) {
+                    Report.Write(" ");
+                    first = false;
+                } else {
+                    Report.Write(" |");
+                }
+
+                Report.Write($" <yellow>{shortname.Key}</yellow>");
+            }
+            Report.WriteLine($"  Switch between game editions");
             Report.WriteLine("  <yellow>create</yellow>                Create a mod");
             Report.WriteLine("  <yellow>rename</yellow>                Rename a mod");
             Report.WriteLine("  <yellow>build</yellow>                 Build a mod");
@@ -407,9 +425,6 @@ namespace XCom2ModTool
             var command = args.Count > 0 ? args[0] : string.Empty;
             var help = command switch
             {
-                "wotc" => HelpSetEdition,
-                "base" => HelpSetEdition,
-                "legacy" => HelpSetEdition,
                 "create" => HelpCreate,
                 "rename" => HelpRename,
                 "build" => HelpBuild,
@@ -419,7 +434,7 @@ namespace XCom2ModTool
                 "new-guid" => HelpNewGuid,
                 "package-info" => HelpPackageInfo,
                 "save-info" => HelpSaveInfo,
-                _ => new Action(() => Help(edition)),
+                _ => HasEditionShortname(command) ? HelpSetEdition : new Action(() => Help(edition)),
             };
             help();
             return;
@@ -427,10 +442,15 @@ namespace XCom2ModTool
 
         private static void HelpSetEdition()
         {
-            Report.WriteLine($"To switch between {XCom2.Wotc.DisplayName} and {XCom2.Base.DisplayName}:");
-            Report.WriteLine($"{Name} wotc");
-            Report.WriteLine($"{Name} base");
-            Report.WriteLine($"{Name} legacy");
+            Report.WriteLine($"To switch between editions:");
+            foreach (KeyValuePair<string, string> shortname in Settings.Default.Shortnames) {
+                Report.WriteLine($"{Name} {shortname.Key}");
+            }
+        }
+
+        private static bool HasEditionShortname(string command)
+        {
+            return Settings.Default.Shortnames.ContainsKey(command);
         }
 
         private static void HelpCreate()
@@ -593,7 +613,7 @@ namespace XCom2ModTool
 
         private static void Paths()
         {
-            foreach (var edition in new[] { XCom2.Base, XCom2.Wotc })
+            foreach (var edition in Settings.Default.Editions.Values)
             {
                 Report.WriteLine($"{edition.DisplayName} is {(edition.IsInstalled ? edition.Path : "not found")}");
                 Report.WriteLine($"{edition.SdkDisplayName} is {(edition.IsSdkInstalled ? edition.SdkPath : "not found")}");

@@ -90,7 +90,6 @@
     <Compile Include="UnrealPackages\CompressedChunk.cs" />
     <Compile Include="UnrealPackages\PackageSignature.cs" />
     <Compile Include="UnrealPackages\PackageReferenceable.cs" />
-    <Compile Include="XCom2.cs" />
     <Compile Include="XCom2Browser.cs" />
     <Compile Include="XCom2Edition.cs" />
     <Compile Include="XCom2Editor.cs" />

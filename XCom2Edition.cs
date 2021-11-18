@@ -30,36 +30,57 @@ namespace XCom2ModTool
 
         private string path;
         private string sdkPath;
-        private string userGameFolderName;
-        private string highlanderName;
 
-        public XCom2Edition(string internalName, string displayName, string steamAppName, string subFolderName, string sdkSteamAppName, string userGameFolderName, string highlanderName, bool isExpansion = false)
+        public XCom2Edition(
+            string internalName,
+            string displayName,
+            string steamAppName,
+            string subFolderName,
+            string sdkSteamAppName,
+            string userGameFolderName,
+            string highlanderName,
+            bool isExpansion = false,
+            string customSdkPath = null,
+            string customGamePath = null)
         {
             InternalName = internalName;
             DisplayName = displayName;
+            SteamAppName = steamAppName;
+            SubFolderName = subFolderName;
+            SdkSteamAppName = sdkSteamAppName;
+            UserGameFolderName = userGameFolderName;
+            HighlanderName = highlanderName;
             IsExpansion = isExpansion;
-            this.userGameFolderName = userGameFolderName;
-            this.highlanderName = highlanderName;
+            CustomSdkPath = customSdkPath;
+            CustomGamePath = customGamePath;
 
-            if (Steam.TryFindApp(steamAppName, out string path))
-            {
-                if (string.IsNullOrEmpty(subFolderName))
+            if (string.IsNullOrEmpty(CustomGamePath)) {
+                if (Steam.TryFindApp(SteamAppName, out string path))
                 {
-                    this.path = path;
-                }
-                else
-                {
-                    path = System.IO.Path.Combine(path, subFolderName);
-                    if (Directory.Exists(path))
+                    if (string.IsNullOrEmpty(SubFolderName))
                     {
                         this.path = path;
                     }
+                    else
+                    {
+                        path = System.IO.Path.Combine(path, SubFolderName);
+                        if (Directory.Exists(path))
+                        {
+                            this.path = path;
+                        }
+                    }
                 }
+            } else if (Directory.Exists(customGamePath)) {
+                this.path = customGamePath;
             }
 
-            if (Steam.TryFindApp(sdkSteamAppName, out path))
-            {
-                sdkPath = path;
+            if (string.IsNullOrEmpty(CustomSdkPath)) {
+                if (Steam.TryFindApp(SdkSteamAppName, out sdkPath))
+                {
+                    this.sdkPath = sdkPath;
+                }
+            } else if (Directory.Exists(CustomSdkPath)) {
+                this.sdkPath = CustomSdkPath;
             }
         }
 
@@ -68,8 +89,15 @@ namespace XCom2ModTool
 
         public string InternalName { get; }
         public string DisplayName { get; }
-        public string SdkDisplayName => $"{DisplayName} SDK";
+        public string SteamAppName { get; }
+        public string SubFolderName { get; }
+        public string SdkSteamAppName { get; }
+        public string UserGameFolderName { get; }
+        public string HighlanderName { get; }
         public bool IsExpansion { get; }
+        public string CustomSdkPath { get; }
+        public string CustomGamePath { get; }
+        public string SdkDisplayName => $"{DisplayName} SDK";
 
         public string Path => ConditionalPath(IsInstalled, path, DisplayName);
 
@@ -95,7 +123,7 @@ namespace XCom2ModTool
 
         public string SdkCompilerPath => Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkCompilerName);
 
-        public string UserPath => Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), MyGamesFolderName, userGameFolderName, XComGameFolderName);
+        public string UserPath => Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), MyGamesFolderName, UserGameFolderName, XComGameFolderName);
 
         public string UserConfigPath => Combine(UserPath, ConfigFolderName);
 
@@ -105,7 +133,7 @@ namespace XCom2ModTool
 
         public string EditorPath => System.IO.Path.Combine(SdkPath, SdkBinariesFolderName, SdkWin64FolderName, SdkEditorName);
 
-        public string SdkHighlanderSourceCodeFolderName => highlanderName;
+        public string SdkHighlanderSourceCodeFolderName => HighlanderName;
 
         public string GetModStagingPath(ModInfo modInfo)
         {
@@ -129,9 +157,9 @@ namespace XCom2ModTool
 
         public string GetHighlanderModSourceCodePath()
         {
-            var highlanderPaths = Steam.FindAppWorkshopItemPaths(XCom2.SteamAppId)
-                                       .Append(Combine(XComGamePath, ModsFolderName, highlanderName))
-                                       .Select(x => Combine(x, highlanderName + ModMetadata.Extension))
+            var highlanderPaths = Steam.FindAppWorkshopItemPaths(Settings.Default.SteamAppId)
+                                       .Append(Combine(XComGamePath, ModsFolderName, HighlanderName))
+                                       .Select(x => Combine(x, HighlanderName + ModMetadata.Extension))
                                        .Where(x => File.Exists(x))
                                        .Select(x => System.IO.Path.GetDirectoryName(x))
                                        .ToArray();
